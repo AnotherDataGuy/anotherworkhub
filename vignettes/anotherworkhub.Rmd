@@ -1,0 +1,38 @@
+---
+title: "anotherworkhub"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{anotherworkhub}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(anotherworkhub)
+```
+
+{anotherworkhub} is a shiny app implementing OpenAI api calls to GPT models to generate reports.
+
+## App preview  
+
+![{anotherworkhub} preview.](app_preview.png)
+
+
+
+## Infrastructure  
+- {golem}
+- {shinydashboard}
+- {httr}
+
+
+## Updates to come
+- Interview simulator
+
+
