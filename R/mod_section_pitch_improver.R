@@ -7,6 +7,8 @@
 #' @noRd
 #'
 #' @importFrom shiny NS tagList
+#' @importFrom stringr str_remove_all str_squish
+#' @importFrom tokenizers tokenize_sentences tokenize_words
 mod_section_pitch_improver_ui <- function(id){
   ns <- NS(id)
   shinydashboard::tabItem(
