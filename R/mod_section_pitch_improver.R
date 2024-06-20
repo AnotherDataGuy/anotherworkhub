@@ -609,7 +609,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
         )
 
       future({
-        fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_orthography_and_grammar(), "gpt-4")
+        fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_orthography_and_grammar(), "gpt-4o")
       }) %...>% {
         responses$ortography_and_grammar <- .
         print("Orthography and Grammar response received")
@@ -624,7 +624,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
       )
 
       future({
-        fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_structure_and_coherence(), "gpt-4")
+        fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_structure_and_coherence(), "gpt-4o")
       }) %...>% {
         responses$structure_and_coherence <- .
         print("Structure and Coherence response received")
