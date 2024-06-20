@@ -8,6 +8,7 @@
 
 {anotherworkhub} relies on [Shiny app](https://en.wikipedia.org/wiki/Shiny_(software)) infrastructure and implements API calls to GPT models.
 
+
 ## App preview
 
 ![{anotherworkhub} preview.](vignettes/app_preview.png)

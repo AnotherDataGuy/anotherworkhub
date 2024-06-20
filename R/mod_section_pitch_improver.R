@@ -262,13 +262,32 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
         ))
       }
 
-      cleaned_text <- gsub("[[:punct:]]", "", text)
-      word_count <- unlist(strsplit(cleaned_text, "\\W+"))
-      words <- length(word_count[word_count != ""])
+      # Function to clean text for word counting
+      clean_for_words <- function(text) {
+        text <- tolower(text)
+        text <- stringr::str_remove_all(text, "[[:punct:]]")
+        text <- stringr::str_remove_all(text, "[[:digit:]]")
+        text <- stringr::str_squish(text)
+        return(text)
+      }
 
-      characters <- nchar(cleaned_text)
-      sentences <- length(strsplit(cleaned_text, "[.!?]+")[[1]])
-      paragraphs <- length(strsplit(cleaned_text, "\n\n")[[1]])
+      # Original text
+      original_text <- text
+
+      # Cleaned text for word counting
+      cleaned_text <- clean_for_words(text)
+
+      # Word count
+      words <- length(tokenizers::tokenize_words(cleaned_text)[[1]])
+
+      # Character count (including punctuation)
+      characters <- stringi::stri_length(original_text)
+
+      # Sentence count
+      sentences <- length(tokenizers::tokenize_sentences(original_text)[[1]])
+
+      # Paragraph count
+      paragraphs <- length(stringi::stri_split_regex(original_text, "\\R{2,}")[[1]])
 
       pitch_length_seconds <- words / reading_speed * 60
 
