@@ -25,12 +25,6 @@ Password: 1234shiny!
 
 ![{anotherworkhub} preview.](vignettes/app_preview.png)
 
-<<<<<<< HEAD
-=======
-## Test the app
-
-If you want to test the app but don't have access to a GPT account, [*hit me up*](https://www.linkedin.com/in/lgcruzsaavedra/) and I will give you access :)
->>>>>>> 80bc792a2d5d862d5b5d6ead3574338d9d9e1b92
 
 ## Installation
 
