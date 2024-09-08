@@ -9,8 +9,30 @@ body {
   display: initial;
 }
 
+#sidebar_menu {
+  font-size: 1vw;
+  line-height: 3vw;
+}
+
 #le_style_du_logo {
   width: -webkit-fill-available;
+}
+
+/* Targeting the right sidebar's ul.nav-tabs */
+#section_right_sidebar_tools {
+  display: block !important;
+  font-size: large !important;  /* Optional styling */
+}
+
+/* Ensure selectInput dropdowns appear on top */
+.control-sidebar .tab-pane .selectize-dropdown {
+  z-index: 800 !important;
+  position: relative !important;
+}
+
+/* Allow sidebar to properly handle overflow */
+.control-sidebar {
+  overflow: visible !important;
 }
 
 
