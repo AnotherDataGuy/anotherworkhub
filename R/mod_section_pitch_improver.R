@@ -9,6 +9,10 @@
 #' @importFrom shiny NS tagList
 #' @importFrom stringr str_remove_all str_squish
 #' @importFrom tokenizers tokenize_sentences tokenize_words
+#' @importFrom dplyr count filter
+#' @importFrom tidytext unnest_tokens
+#' @import wordcloud2
+
 mod_section_pitch_improver_ui <- function(id){
   ns <- NS(id)
   shinydashboard::tabItem(
@@ -16,7 +20,12 @@ mod_section_pitch_improver_ui <- function(id){
     fluidRow(
       uiOutput(ns("app_description"))
     ),
-    # hr(class = "hresthetics"),
+    # fluidRow(
+    #   width = 12,
+    #   box(title = "Word Cloud", width = 12, solidHeader = TRUE, collapsible = TRUE,
+    #       wordcloud2Output(ns("word_cloud_output"))
+    #   )
+    # ),
     fluidRow(
       # style="color: dimgray;", #background: lightgrey;
       width = 12,
@@ -62,9 +71,9 @@ mod_section_pitch_improver_ui <- function(id){
       column(width=8,
              style= "border-bottom-style: dashed;",
              uiOutput(ns("recap_prompt"))
-             ),
-      column(width=2)
       ),
+      column(width=2)
+    ),
     fluidRow(
       column(width=4,),
       column(width=4,uiOutput(ns("gpt_button_pitch_improver"))),
@@ -79,20 +88,6 @@ mod_section_pitch_improver_ui <- function(id){
       uiOutput(ns("potential_questions")),
       uiOutput(ns("sentiment"))
     )
-    # fluidRow(
-    #   class = "response-container",
-    #   column(
-    #     width = 2
-    #   ),
-    #   column(
-    #     htmlOutput(ns("gpt_response_pitch_improver")),
-    #     width = 8
-    #   ),
-    #   column(
-    #     width = 2
-    #   )
-    # ),
-    # uiOutput(ns("analysis_results"))
   )
 }
 
@@ -114,9 +109,6 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
       }
     })
 
-    # admin_prompt_pitch_improver <-"Utilisez le texte de l’utilisateur pour générer un très court rapport (600 caractères maximum) sur la qualité de son pitch à partir des informations de son interlocuteur. Soyez très attentif, critique si nécessaire. Le rapport doit être bref mais contenir des informations exploitables. Argumentez votre réponse avec des exemples tirés des entrées de l'utilisateur."
-
-
     #### TITLE
 
     output$app_description <- renderUI({
@@ -132,13 +124,6 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
         HTML('<h2 style="font-size: 18px;">Language Not Supported</h2>')
       }
     })
-
-
-
-
-
-
-
 
 
     output$pitch_improver_user_text_area <- renderUI({
@@ -172,16 +157,6 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
     })
 
 
-    # Initialize the conversation with a placeholder
-    # output$gpt_response_pitch_improver <- renderUI({
-    #   HTML("<div class='empty-response'>...</div>")
-    # })
-
-
-
-
-
-
 
     ######################## main indicators
 
@@ -196,24 +171,6 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
 
       sliderInput(ns("reading_speed"), label, value = 150, min = 90, max = 180)
     })
-
-    # English Choices
-    # english_choices_map <- c(
-    #   "Spontaneous application", "Reply to an offer", "Phone Screening",
-    #   "First Formal Meeting", "First Informal Meeting", "Networking Event",
-    #   "Follow-up After Networking Event", "LinkedIn Message", "Referral Introduction",
-    #   "One-on-One Interview", "Job Offer Acceptance", "Job Offer Clarification",
-    #   "Rejecting a Job Offer", "Asking for Feedback", "Follow-up After Interview"
-    # )
-    #
-    # # French Choices
-    # french_choices_map <- c(
-    #   "Candidature spontanée", "Réponse à une offre", "Entretien téléphonique",
-    #   "Première réunion formelle", "Première réunion informelle", "Événement de réseautage",
-    #   "Suivi après un événement de réseautage", "Message LinkedIn", "Introduction par référence",
-    #   "Entretien individuel", "Acceptation d'offre d'emploi", "Clarification d'offre d'emploi",
-    #   "Refus d'offre d'emploi", "Demande de retour d'information", "Suivi après l'entretien"
-    # )
 
     english_choices_map <- c(
       "spontaneous_application" = "Spontaneous application",
@@ -279,11 +236,16 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
       # Cleaned text for word counting
       cleaned_text <- clean_for_words(text)
 
-      # Word count
-      words <- length(tokenizers::tokenize_words(cleaned_text)[[1]])
+      # char count
+      characters <- length(tokenizers::tokenize_words(cleaned_text)[[1]])
 
-      # Character count (including punctuation)
-      characters <- stringi::stri_length(original_text)
+      # word count (including punctuation)
+      words <- nchar(original_text)
+
+      # characters <- stringi::stri_length(original_text)
+      # characters <- stringi::stri_length(input$text_input_pitch_improver)
+      # characters <- stringi::stri_length(input$text_input_pitch_improver)
+
 
       # Sentence count
       sentences <- length(tokenizers::tokenize_sentences(original_text)[[1]])
@@ -377,6 +339,40 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
 
       HTML(html_content)
     })
+
+
+
+
+    # Render the word cloud output
+    # output$word_cloud_output <- renderWordcloud2({
+    #   req(input$text_input_pitch_improver)  # Ensure the input field has a value
+    #
+    #   # Helper function to generate the word cloud
+    #   generate_word_cloud <- function(text) {
+    #     # Use tibble() instead of data_frame()
+    #     word_data <- tibble::tibble(text = text) |>
+    #       tidytext::unnest_tokens(word, text) |>
+    #       dplyr::filter(nchar(word) > 3) |>
+    #       dplyr::count(word, sort = TRUE) |>
+    #       dplyr::filter(n > 2)  # Only words that appear more than 2 times
+    #
+    #     # If no words meet the criteria, return NULL
+    #     if (nrow(word_data) == 0) return(NULL)
+    #
+    #     # Create word cloud
+    #     wordcloud2::wordcloud2(word_data, size = 0.7)
+    #   }
+    #
+    #   generate_word_cloud(input$text_input_pitch_improver)
+    # })
+
+
+
+
+
+
+
+
 
     construct_sentence <- function(input_value, english_text, french_text, lang, is_text_input = FALSE) {
       # Check if input value is NA or NULL
@@ -627,7 +623,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
       showModal(
         modalDialog("Analyse de l'orthographe et de la grammaire en cours...",
                     easyClose = FALSE)
-        )
+      )
 
       future({
         fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_orthography_and_grammar(), "gpt-4o")
@@ -692,8 +688,8 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, commu
       column(width=12,
              h3("Orthographe et grammaire"),
              HTML(responses$ortography_and_grammar)
-             )
-      })
+      )
+    })
 
     output$structure_and_coherence <- renderUI({
       req(responses$structure_and_coherence)

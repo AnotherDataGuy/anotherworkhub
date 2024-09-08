@@ -1,8 +1,9 @@
 #' The application User-Interface
 #'
-#' @param request Internal parameter for `{shiny}`.
+#' @param request Internal parameter for {shiny}.
 #'     DO NOT REMOVE.
 #' @import shiny
+#' @import bs4Dash
 #' @noRd
 app_ui <- function(request) {
   tagList(
@@ -11,21 +12,20 @@ app_ui <- function(request) {
     # Your application UI logic
     bs4Dash::dashboardPage(
       dark = TRUE,
-      header = bs4Dash::dashboardHeader(),
+      header = bs4Dash::dashboardHeader(
+        uiOutput("user_profile")
+      ),
       sidebar = bs4Dash::dashboardSidebar(
-        # flat = TRUE,
-
-        collapsed = TRUE,
-        # tags$div(
-        #   style = "text-align: center;",
-        #   tags$img(src = "www/DALL·E 2023-12-26 06.20.09.png", id = "le_style_du_logo")
-        # ),
+        width = "320px",
+        collapsed = FALSE,
+        uiOutput("app_logo"),
         uiOutput("sidebar_menu")
       ),
 
       controlbar = bs4Dash::dashboardControlbar(
+        width = "380px",
         id = "right_control_bar",
-        style = "width: 350px; font-size: small;",
+        style = "font-size: small;",
         # skin = "dark",
         collapsed = FALSE,
         overlay = FALSE,
@@ -43,14 +43,12 @@ app_ui <- function(request) {
 
       footer = dashboardFooter(),
       body = bs4Dash::dashboardBody(
-        uiOutput("auth_output "),
+        uiOutput("auth_output"),
         # Upper part of the body section
 
         fluidRow(
           column(width = 9
-                 # div(class = "communication-context-icon",
-                 #     tags$i(class = "fa fa-comments-o fa-comments-o-background")
-                 # )
+
           ),
           column(width = 3,
                  style = "text-align: right;padding: 3px 32px 0 0px;",
@@ -58,8 +56,17 @@ app_ui <- function(request) {
           )
         ),
         shinydashboard::tabItems(
-          mod_section_pitch_improver_ui("section_pitch_improver_1")
-          # mod_section_interview_simulator_ui("section_interview_simulator_1")
+          shinydashboard::tabItem(
+            tabName = "tab_pitch_improver",
+            mod_section_pitch_improver_ui("section_pitch_improver_1")
+          ),
+          shinydashboard::tabItem(
+            tabName = "tab_interview_simulator",
+            div(class = "communication-context-icon",
+                tags$i(class = "fa fa-comments-o fa-comments-o-background")
+            ),
+            mod_section_interview_simulator_ui("section_interview_simulator_1")
+          )
         )
 
       )

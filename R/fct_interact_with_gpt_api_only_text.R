@@ -5,7 +5,7 @@
 #' @return The return value, if any, from executing the function.
 #' @import httr
 #' @noRd
-fct_interact_with_gpt_api_only_text <- function(api_key, user_input, admin_prompt, model = "gpt-3.5-turbo") {
+fct_interact_with_gpt_api_only_text <- function(api_key, user_input, admin_prompt, model = "gpt-4o-mini") {
   response <- httr::POST(
     url = "https://api.openai.com/v1/chat/completions",
     httr::add_headers(Authorization = paste("Bearer", api_key)),
