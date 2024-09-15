@@ -5,6 +5,14 @@ dev_history.R
 ^dev$
 $run_dev.*
 ^.here$
+<<<<<<< HEAD
 ^app\.R$
 ^rsconnect$
 ^\.rscignore$
+=======
+^LICENSE\.md$
+^app\.R$
+^rsconnect$
+^doc$
+^Meta$
+>>>>>>> c84f8ab4441225bfb5b12d758401eba485462428

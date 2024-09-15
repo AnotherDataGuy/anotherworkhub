@@ -1,0 +1,12 @@
+name: anotherworkhub
+title: anotherworkhub
+username: anotherdataguy
+account: anotherdataguy
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10850317
+bundleId: 8088192
+url: https://anotherdataguy.shinyapps.io/anotherworkhub/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
