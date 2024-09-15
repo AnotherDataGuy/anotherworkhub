@@ -1,0 +1,10 @@
+.Rproj.user
+inst/doc
+inst/app/www/gab.txt
+/doc/
+/Meta/
+.Rhistory
+.Rdata
+.httr-oauth
+.DS_Store
+.quarto

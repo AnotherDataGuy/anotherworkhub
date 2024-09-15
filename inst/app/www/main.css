@@ -1,0 +1,251 @@
+body {
+  font-family: 'Arial', sans-serif;
+}
+
+.content {
+  margin-right: 9%;
+}
+.sidebar-menu {
+  display: initial;
+}
+
+#sidebar_menu {
+  font-size: 1vw;
+  line-height: 3vw;
+}
+
+#le_style_du_logo {
+  width: -webkit-fill-available;
+}
+
+/* Targeting the right sidebar's ul.nav-tabs */
+#section_right_sidebar_tools {
+  display: block !important;
+  font-size: large !important;  /* Optional styling */
+}
+
+/* Ensure selectInput dropdowns appear on top */
+.control-sidebar .tab-pane .selectize-dropdown {
+  z-index: 800 !important;
+  position: relative !important;
+}
+
+/* Allow sidebar to properly handle overflow */
+.control-sidebar {
+  overflow: visible !important;
+}
+
+
+.card-body {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+hr.hresthetics {
+        border: 0;                                        /* Remove the default border */
+        height: 5px;                                      /* Increase thickness of the line */
+        background: linear-gradient(to right, #8e44ad, #3498db); /* Gradient color */
+        margin-top: 20px;                                 /* Increase space above the line */
+        margin-bottom: 20px;                              /* Increase space below the line */
+        width: 80%;                                       /* Increase width of the line */
+        text-align: center;                               /* Center the line horizontally */
+        border-radius: 5px;                               /* Rounded corners */
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);         /* Enhanced shadow for depth */
+}
+
+/* .form-group .shiny-input-container {
+  display: contents;
+}*/
+
+#right_control_bar {
+  width: 350px; font-size: small;
+}
+#pitch_improver_user_text_area {
+  display: contents;
+}
+
+#text_input {
+  background: lightgrey;
+  position: relative;
+  color: black;
+}
+
+#section_pitch_improver_1-pitch_improver_user_text_area {
+  width: 100%;
+}
+
+#text_input-label{
+  width: 100%;
+  background: lightgrey;
+  color: dimgray;
+}
+
+#gpt_update_pitch_improver_button {
+  font-size: x-large;
+  background: ghostwhite;
+  color: black;
+  border-radius: 5px;   /* Rounded corners */
+  padding: 10px 20px;   /* Padding for better sizing */
+  border: 2px solid black; /* Adding a border */
+  cursor: pointer;      /* Change cursor on hover */
+            }
+#gpt_update_pitch_improver_button:hover {
+ background: lightgray; /* Change background on hover */
+}
+
+#gpt_response_pitch_improver {
+  background-color: #1f1f1f; /* Dark background */
+  color: white; /* White text */
+  font-family: 'Arial', sans-serif; /* Modern, readable font */
+  /* padding: 10px; Some padding for better readability */
+  border-radius: 5px; /* Rounded corners for a sleek look */
+}
+
+#prompt_checker {
+  background-color: #1f1f1f; /* Dark background */
+  color: white; /* White text */
+  font-family: 'Arial', sans-serif; /* Modern, readable font */
+  /* padding: 10px; Some padding for better readability */
+  border-radius: 5px; /* Rounded corners for a sleek look */
+}
+
+hr.hresthetics {
+        border: 0;                                        /* Remove the default border */
+        height: 5px;                                      /* Increase thickness of the line */
+        background: linear-gradient(to right, #8e44ad, #3498db); /* Gradient color */
+        margin-top: 20px;                                 /* Increase space above the line */
+        margin-bottom: 20px;                              /* Increase space below the line */
+        width: 80%;                                       /* Increase width of the line */
+        text-align: center;                               /* Center the line horizontally */
+        border-radius: 5px;                               /* Rounded corners */
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);         /* Enhanced shadow for depth */
+}
+
+#section_pitch_improver_1-communication_context_ui{
+  text-align: -webkit-center;
+}
+
+.communication-context-icon {
+ position: absolute;
+}
+.fa-comments-o-background {
+  /* font-family: 'FontAwesome';*/
+  aria-hidden="true";
+  content: '\f0e6';
+  /* position: absolute;*/
+  top: 5px;
+  left: 5px;
+  /* font-size: 20px;*/
+  color: #ccc;
+  opacity: 0.4;
+  z-index: 0;
+  font-weight: 400;
+  font-size: 20vw;
+  position: absolute;
+  margin-bottom: 1.5vw;
+  text-shadow: 0 0 10px #08f, /* Outer glow */
+               0 0 20px #08f, /* Outer glow */
+               0 0 30px #08f, /* Outer glow */
+               0 0 40px #08f; /* Outer glow */
+}
+.selectize-control {
+  position: relative;
+  z-index: 1;
+}
+
+
+.empty-response {
+    height: 275px; /* Same height as your response container */
+    /*background-color: #f9f9f9; /* Same background color */
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ccc; /* Light color indicating it's inactive/waiting for input */
+}
+
+/* Style for the chat container*/
+#response-container, .response-container {
+    max-height: 350px;
+    overflow-y: auto;
+    padding: 15px;
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    color: black; /* Change text color for visibility against the background */
+}
+
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+
+/* Style for each line in the chat */
+.chat-line {
+    max-width: 80%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 15px;
+    box-shadow: 0 2px 3px rgba(0,0,0,0.1);
+    clear: both; /* Clear floats */
+}
+
+/* Different styles for user and GPT messages */
+.chat-line.user {
+    background-color: #d1e7ff; /* Light blue for user */
+    text-align: left;
+    margin-left: auto; /* Align to the right */
+    margin-right: 10px;
+    float: right; /* Float to the right */
+    word-wrap: break-word;
+}
+
+.chat-line.gpt {
+    background-color: #f7f7f7; /* Light grey for GPT */
+    text-align: left;
+    margin-left: 10px;
+    margin-right: auto; /* Align to the left */
+    float: left; /* Float to the left */
+    word-wrap: break-word;
+}
+
+#section_pitch_improver_1-gpt_update_pitch_improver_button {
+  font-size: x-large;
+  margin-top: 1vw;
+}
+
+
+
+
+/*slider control*/
+
+#section_pitch_improver_1-reading_speed {
+  align-content: center;
+  margin-top: 2vw;
+  font: small-caption;
+}
+
+.custom-switch {
+  display: none;
+}
+
+#section_pitch_improver_1-recap_prompt {
+  transition: opacity 1s ease-in-out;
+  opacity: 0;
+}
+
+
+
+
+

@@ -1,0 +1,11 @@
+.soft-fluid-row {
+    background-color: #222d32; /* Soft background color */
+    border-radius: 10px;       /* Rounded corners */
+    padding: 2vw;             /* Padding inside the row */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+ #main_indicators_output {
+    width: -webkit-fill-available;
+}
+

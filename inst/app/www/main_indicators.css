@@ -1,0 +1,88 @@
+/* Container and Individual Stat Item Styling */
+.stats-container {
+    display: flex;
+    justify-content: space-around;
+    padding: 20px;
+    /* background: rgba(0,0,49,0.7);*/
+    border-radius: 12px;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.25);
+    margin: 15  px auto;
+    overflow: hidden;
+}
+
+.stat-item {
+    position: relative;
+    text-align: center;
+    color: #fff;
+    flex-grow: 1;
+    margin: 0 3px;
+    overflow: hidden;
+}
+
+/* Stat Value and Label Styling */
+.stat-value, .stat-label {
+    display: block;
+    z-index: 1;
+    position: relative;
+    transition: transform 0.3s ease;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+.stat-value { font-size: 2em; font-weight: bold; }
+.stat-label { font-size: 0.7em; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Icon Styling */
+.stat-icon {
+    color: #ffffff85;
+    font-size: 24px;
+    margin-bottom: 10px;
+    transition: transform 0.3s ease;
+}
+
+/* Stat Background Styling */
+.stat-background {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    transform: scale(0);
+    transition: transform 0.3s ease;
+    border-radius: 12px;
+    background-size: 150% 150%;
+    animation: moveGradient 8s ease infinite;
+}
+
+/* Dynamic Individual Backgrounds */
+#words .stat-background { background: linear-gradient(135deg, #ffa751, #ffe259); }
+#characters .stat-background { background: linear-gradient(135deg, #ff6a88, #ff5858); }
+#sentences .stat-background { background: linear-gradient(135deg, #7f7fd5, #91eae4); }
+#paragraphs .stat-background { background: linear-gradient(135deg, #c471f5, #fa71cd); }
+#pitch .stat-background { background: linear-gradient(135deg, #48c6ef, #6f86d6); }
+
+/* Hover Effects */
+.stat-item:hover .stat-background { transform: scale(1.2); }
+.stat-item:hover .stat-value, .stat-item:hover .stat-label, .stat-item:hover .stat-icon { transform: translateY(-10px); }
+
+/* Background Animation */
+@keyframes moveGradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .stat-value { font-size: 1.5em; }
+    .stat-label, .stat-icon { font-size: 0.8em; }
+}
+
+slide input container
+.shiny-input-container:not(.shiny-input-container-inline) {
+     /*width: -webkit-fill-available;*/
+    max-width: 100%;
+}
+
+#section_pitch_improver_1-reading_speed-label {
+  font: status-bar;
+  text-align: center;
+}
