@@ -11,82 +11,33 @@ app_ui <- function(request) {
     bs4Dash::dashboardPage(
       dark = TRUE,
       help = NULL,
-      header = bs4Dash::dashboardHeader(uiOutput("user_profile")),
+      header = bs4Dash::dashboardHeader(
+        title = tags$button(
+          id = "btn_home_brand",
+          class = "awh-brand-link awh-goto",
+          type = "button",
+          `data-target` = "home",
+          "anotheRworkhub"
+        ),
+        titleWidth = "auto",
+        rightUi = tags$li(
+          class = "dropdown nav-item awh-header-lang-item",
+          uiOutput("header_language_ui")
+        ),
+        uiOutput("user_profile")
+      ),
       sidebar = bs4Dash::dashboardSidebar(disable = TRUE),
       controlbar = NULL,
       footer = NULL,
       body = bs4Dash::dashboardBody(
         tags$div(
-          style = "margin-bottom: 80px;",  # Keep the spacing
+          class = "awh-main",
           uiOutput("auth_output"),
-          fluidRow(
-            column(width = 9),
-            column(width = 3,
-                   style = "text-align: right;padding: 3px 32px 0 0px;",
-                   selectInput("language", "Langue de l'interface/ UI's Language:",
-                               choices = c("Français" = "FR", "English" = "ENG"),
-                               selected = "Français")
-            )
-          ),
-          # Content sections
-          div(id = "interview_section", uiOutput("interview_content")),
-          div(id = "pitch_section", style = "display: none;", uiOutput("pitch_content"))
+          div(id = "home_section", class = "awh-section", uiOutput("home_content")),
+          div(id = "interview_section", class = "awh-section", style = "display: none;", uiOutput("interview_content")),
+          div(id = "pitch_section", class = "awh-section", style = "display: none;", uiOutput("pitch_content"))
         ),
-        # Fixed bottom navigation
-        tags$div(
-          id = "bottom-sidebar",
-          style = "
-      position: fixed;
-      bottom: 2vh;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 96%;
-      max-width: 800px;
-      background: rgba(25, 28, 36, 0.85);
-      backdrop-filter: blur(8px);
-      padding: 15px;
-      border-radius: 12px;
-      box-shadow: 0 -8px 32px 0 rgba(31, 38, 135, 0.37);
-      z-index: 1031;
-    ",
-          div(
-            class = "bottom-sidebar-menu",
-            style = "display: flex; justify-content: center; gap: 12px;",
-            actionButton(
-              "btn_interview",
-              label = tags$div(
-                style = "display: flex; align-items: center; gap: 8px;",
-                icon("id-card"),
-                tags$span("Simuler un entretien")
-              ),
-              class = "nav-link active"
-            ),
-            actionButton(
-              "btn_pitch",
-              label = tags$div(
-                style = "display: flex; align-items: center; gap: 8px;",
-                icon("sliders"),
-                tags$span("Améliorer mon pitch")
-              ),
-              class = "nav-link"
-            )
-          ),
-          tags$button(
-            id = "toggle-bottom-sidebar",
-            icon("chevron-down"),
-            style = "
-        position: absolute;
-        top: -18px;
-        right: 15px;
-        background: rgba(255, 193, 7, 0.9);
-        border: none;
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        cursor: pointer;
-      "
-          )
-        )
+        uiOutput("bottom_navigation_ui")
       )
     )
   )
@@ -101,46 +52,109 @@ golem_add_external_resources <- function() {
   add_resource_path("www", app_sys("app/www"))
 
   tags$head(
-    tags$link(rel = "stylesheet", href = "www/app_ui.css"),
-    tags$link(rel = "stylesheet", href = "www/interview_simulator.css"),
-    tags$link(rel = "stylesheet", href = "www/pitch_improver.css"),
-    tags$script(src = "main_indicators.js"),
-    # Update the JavaScript for minimize functionality
+    tags$meta(name = "viewport", content = "width=device-width, initial-scale=1, viewport-fit=cover"),
+    # CSS/JS under inst/app/www are injected once by bundle_resources() below.
+    tags$script(HTML("
+      (function() {
+        function registerInterviewStreamHandler() {
+          if (window.interviewStreamHandlerRegistered || !window.Shiny) return;
+          window.interviewStreamHandlerRegistered = true;
+          Shiny.addCustomMessageHandler('interview_stream_token', function(data) {
+            var bubble = document.getElementById(data.id);
+            if (!bubble) return;
+            var textNode = bubble.querySelector('.streaming-text');
+            if (textNode) {
+              textNode.textContent = data.text || '';
+            } else {
+              bubble.textContent = data.text || '';
+            }
+            if (data.done) {
+              bubble.classList.add('is-complete');
+            } else {
+              bubble.classList.remove('is-complete');
+            }
+            var container = bubble.closest('.chat-container');
+            if (container) {
+              container.scrollTop = container.scrollHeight;
+            }
+          });
+        }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', registerInterviewStreamHandler);
+        } else {
+          registerInterviewStreamHandler();
+        }
+        $(document).on('shiny:connected', registerInterviewStreamHandler);
+      })();
+    ")),
     tags$script("
       $(document).ready(function() {
-        // Show interview section by default
-        $('#interview_section').show();
+        function awhReveal($el) {
+          $el.css('display', 'block').removeClass('awh-section-enter');
+          // Force reflow so the entrance animation restarts every switch.
+          if ($el.length) { void $el[0].offsetWidth; }
+          $el.addClass('awh-section-enter');
+        }
+
+        function awhSwitchSection(target) {
+          var $show = $('#' + target + '_section');
+          if (!$show.length || $show.is(':visible')) { return; }
+          var $current = $('.awh-section:visible').not($show);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          if ($current.length) {
+            $current.stop(true, true).fadeOut(160, function() { awhReveal($show); });
+          } else {
+            awhReveal($show);
+          }
+        }
+
+        function awhNav(target) {
+          $('.bottom-sidebar-menu .nav-link, .bottom-sidebar-menu .btn').removeClass('active');
+          $('#btn_' + target).addClass('active');
+          awhSwitchSection(target);
+        }
+
+        // Home is the landing view; the other sections start hidden.
+        $('#home_section').css('display', 'block');
+        $('#interview_section').hide();
         $('#pitch_section').hide();
 
-        // Handle interview button click
-        $('#btn_interview').on('click', function() {
-          $('#interview_section').show();
-          $('#pitch_section').hide();
-          $('.nav-link').removeClass('active');
-          $(this).addClass('active');
+        $(document).on('click', '#btn_home', function() { awhNav('home'); });
+        $(document).on('click', '#btn_home_brand', function() { awhNav('home'); });
+        $(document).on('click', '#btn_interview', function() { awhNav('interview'); });
+        $(document).on('click', '#btn_pitch', function() { awhNav('pitch'); });
+
+        // In-page calls to action on the home screen reuse the nav logic.
+        $(document).on('click', '.awh-goto', function() {
+          var target = $(this).data('target');
+          if (target) { awhNav(target); }
         });
 
-        // Handle pitch button click
-        $('#btn_pitch').on('click', function() {
-          $('#interview_section').hide();
-          $('#pitch_section').show();
-          $('.nav-link').removeClass('active');
-          $(this).addClass('active');
-        });
-
-        // Handle minimize button click - Updated for new transform
-        $('#toggle-bottom-sidebar').on('click', function() {
+        $(document).on('click', '#toggle-bottom-sidebar', function() {
           const sidebar = $('#bottom-sidebar');
-          if (sidebar.hasClass('minimized')) {
-            sidebar.removeClass('minimized');
-            // Reset to original transform
-            sidebar.css('transform', 'translateX(-50%)');
-          } else {
-            sidebar.addClass('minimized');
-            // Combine the transforms
-            sidebar.css('transform', 'translate(-50%, calc(100% - 40px))');
-          }
+          sidebar.toggleClass('minimized');
           $(this).find('i').toggleClass('fa-chevron-down fa-chevron-up');
+        });
+
+        // Fluid home: cursor glow + interactive step tabs + lane focus tint
+        var $homeSection = $('#home_section');
+        $homeSection.on('mousemove', function(e) {
+          var rect = this.getBoundingClientRect();
+          var x = ((e.clientX - rect.left) / rect.width) * 100;
+          var y = ((e.clientY - rect.top) / rect.height) * 100;
+          this.style.setProperty('--home-px', x + '%');
+          this.style.setProperty('--home-py', y + '%');
+          var dx = (x - 50) * 0.05;
+          var dy = (y - 50) * 0.035;
+          this.style.setProperty('--home-dx', dx + 'px');
+          this.style.setProperty('--home-dy', dy + 'px');
+        });
+
+        $(document).on('mouseenter focus', '.home-lane', function() {
+          $homeSection.attr('data-lane-focus', $(this).data('target') || '');
+        });
+        $(document).on('mouseleave blur', '.home-lane', function() {
+          $homeSection.attr('data-lane-focus', '');
         });
       });
     "),

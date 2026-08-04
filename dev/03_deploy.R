@@ -59,3 +59,22 @@ rsconnect::deployApp(
   lint = FALSE,
   forceUpdate = TRUE
 )
+
+## Credentials DB (local only — never commit passwords or sqlite files)
+## Run interactively when you need to recreate anotherworkhubusers.sqlite:
+##
+## library(shinymanager)
+## passphrase <- Sys.getenv("shinymanagerauth")
+## stopifnot(nzchar(passphrase))
+## credentials <- data.frame(
+##   user     = c(Sys.getenv("AWH_ADMIN_USER"), Sys.getenv("AWH_USER")),
+##   password = c(Sys.getenv("AWH_ADMIN_PASSWORD"), Sys.getenv("AWH_USER_PASSWORD")),
+##   admin    = c(TRUE, FALSE),
+##   stringsAsFactors = FALSE
+## )
+## stopifnot(all(nzchar(credentials$user)), all(nzchar(credentials$password)))
+## create_db(
+##   credentials_data = credentials,
+##   sqlite_path      = "anotherworkhubusers.sqlite",
+##   passphrase       = passphrase
+## )

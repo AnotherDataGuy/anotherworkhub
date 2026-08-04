@@ -6,172 +6,89 @@
 #'
 #' @noRd
 #'
-#' @importFrom shiny NS tagList
+#' @importFrom shiny NS tagList debounce
 #' @importFrom promises then
 #' @importFrom future future
 #' @importFrom stringr str_remove_all str_squish
 #' @importFrom tokenizers tokenize_sentences tokenize_words
-#' @importFrom dplyr count filter
-#' @importFrom tidytext unnest_tokens
+#' @importFrom htmltools htmlEscape
 mod_section_pitch_improver_ui <- function(id) {
   ns <- NS(id)
 
-  shinydashboard::tabItem(
+  tagList(
     tags$head(
-      tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"),
-      tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML")
-      ),
-    tabName = "tab_pitch_improver",
+      tags$link(rel = "stylesheet", href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css", crossorigin = "anonymous"),
+      tags$script(src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML", crossorigin = "anonymous")
+    ),
+    shinyjs::useShinyjs(),
 
-    # Main container
     div(
       class = "pitch-improver-container",
-      style = "padding: 2rem;",
+      uiOutput(ns("app_description")),
 
-      # Header Section
       fluidRow(
+        class = "pitch-layout awh-split-layout",
         column(
           width = 12,
+          class = "pitch-setup-col awh-col-narrow",
           div(
-            class = "settings-panel",
-            uiOutput(ns("app_description"))
-          )
-        )
-      ),
-
-      # Main Content Area - Two Column Layout
-      fluidRow(
-        # Left Column - Input Forms
-        column(
-          width = 4,
-          # Required Fields Panel
-          div(
-            class = "required-fields-panel",
-            # Required Fields Header with dynamic content
+            class = "pitch-setup-panel awh-panel",
             uiOutput(ns("required_fields_header")),
-
-            # Communication Context
             div(
-              class = "form-group",
+              class = "compact-field",
               uiOutput(ns("context_label_ui")),
-              div(
-                class = "context-select-wrapper",
-                uiOutput(ns("communication_context_ui"))
-              )
+              uiOutput(ns("communication_context_ui"))
             ),
-
-            # Recipient
             div(
-              class = "form-group",
+              class = "compact-field",
               uiOutput(ns("recipient_label_ui")),
               uiOutput(ns("recipient_of_the_pitch_ui"))
             ),
-
-            # Hierarchical Status
             div(
-              class = "form-group",
-              uiOutput(ns("hierarchical_label_ui")),
+              class = "compact-field",
               uiOutput(ns("hierarchical_status_ui"))
-            )
-          ),
-
-          # Divider
-          div(
-            style = "height: 1px; background: #e9ecef; margin: 2rem -2rem;"
-          ),
-
-          # Optional Fields Panel
-          div(
-            class = "settings-panel",
-            style = "margin-top: 1.5rem;",
-            # Optional Fields Header
-            div(
-              class = "form-group",
-              uiOutput(ns("optional_fields_header"))
             ),
-            # Optional Fields Content
+            div(
+              class = "compact-field expectations-section",
+              uiOutput(ns("expectations_section_header")),
+              uiOutput(ns("expectations_grid"))
+            ),
+            div(class = "optional-toggle", uiOutput(ns("optional_fields_header"))),
             shinyjs::hidden(
               div(
                 id = ns("optional_fields"),
-                # Background
-                div(
-                  class = "form-group",
-                  uiOutput(ns("background_label_ui")),
-                  uiOutput(ns("recipients_background_ui"))
-                ),
-                # Activity
-                div(
-                  class = "form-group",
-                  uiOutput(ns("activity_label_ui")),
-                  uiOutput(ns("recipients_activity_ui"))
-                ),
-                # Expertise
-                div(
-                  class = "form-group",
-                  uiOutput(ns("expertise_label_ui")),
-                  uiOutput(ns("recipients_expertise_ui"))
-                )
+                class = "optional-fields-panel",
+                div(class = "compact-field", uiOutput(ns("background_label_ui")), uiOutput(ns("recipients_background_ui"))),
+                div(class = "compact-field", uiOutput(ns("activity_label_ui")), uiOutput(ns("recipients_activity_ui"))),
+                div(class = "compact-field", uiOutput(ns("expertise_label_ui")), uiOutput(ns("recipients_expertise_ui")))
               )
             )
           )
         ),
 
-        # Right Column - Analysis Area
         column(
-          width = 8,
-          # Text Input and Stats
+          width = 12,
+          class = "pitch-workspace-col awh-col-wide",
           div(
-            class = "settings-panel",
-            # Language Selection
+            class = "pitch-workspace-panel awh-panel",
+            div(class = "compact-field", uiOutput(ns("gpt_language_ui"))),
+            div(class = "compact-field", uiOutput(ns("pitch_improver_user_text_area"))),
+            uiOutput(ns("pitch_char_progress")),
+            uiOutput(ns("main_indicators_output")),
+            div(class = "pitch-recap-card", uiOutput(ns("recap_prompt"))),
             div(
-              class = "form-group",
-              uiOutput(ns("gpt_language_label_ui")),
-              uiOutput(ns("gpt_language_ui"))
-            ),
-            # Text Area
-            div(
-              class = "form-group",
-              uiOutput(ns("pitch_improver_user_text_area"))
-            ),
-            # Statistics Display
-            div(
-              class = "indicators",
-              uiOutput(ns("main_indicators_output"))
-            ),
-            # Reading Speed Control
-            div(
-              width = 12,
-              class = "form-group",
-              style = "margin-top: 1.5rem;",
-              uiOutput(ns("reading_speed_slider"))
+              class = "analyze-button",
+              uiOutput(ns("gpt_button_pitch_improver")),
+              uiOutput(ns("informative_message"))
             )
           ),
-
-          # Analysis Results Panel
           div(
-            class = "settings-panel",
-            style = "margin-top: 1.5rem;",
-            # Recap and Analysis Button
-            div(
-              class = "form-group",
-              uiOutput(ns("recap_prompt")),
-              div(
-                class = "analyze-button",
-                style = "text-align: center; margin-top: 1.5rem;",
-                uiOutput(ns("gpt_button_pitch_improver")),
-                uiOutput(ns("informative_message"))
-              )
-            ),
-            # Analysis Results
-            div(
-              id = ns("gpt_pitch_analysis"),
-              class = "analysis-results",
-              style = "margin-top: 1.5rem;",
-              uiOutput(ns("orthography_and_grammar")),
-              uiOutput(ns("structure_and_coherence")),
-              uiOutput(ns("potential_questions")),
-              uiOutput(ns("sentiment"))
-            )
+            id = ns("gpt_pitch_analysis"),
+            class = "analysis-results-grid",
+            uiOutput(ns("orthography_and_grammar")),
+            uiOutput(ns("structure_and_coherence")),
+            uiOutput(ns("potential_questions")),
+            uiOutput(ns("sentiment"))
           )
         )
       )
@@ -182,12 +99,19 @@ mod_section_pitch_improver_ui <- function(id) {
 #' section_pitch_improver Server Functions
 #'
 #' @noRd
-mod_section_pitch_improver_server <- function(id, api_pwd, language_input, translations) {
+mod_section_pitch_improver_server <- function(id, api_pwd, language_input, translations, usage_guard = NULL) {
   moduleServer(id, function(input, output, session){
     ns <- session$ns
 
     api_key <- api_pwd
+    p18n <- translations$pitch
+    security_limits_cfg <- if (is.null(usage_guard)) security_limits() else usage_guard$get_limits()
 
+    rv <- reactiveValues(
+      hierarchical_status = "entry_level",
+      expectations_level = NULL,
+      analysis_in_flight = FALSE
+    )
 
     english_choices_map <- translations$english_choices_map
     french_choices_map <- translations$french_choices_map
@@ -201,7 +125,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
       div(
         class = "required-fields-header",
         tags$i(class = "fa fa-asterisk"),
-        span(if(language_input() == "ENG") "Required Fields" else "Champs requis")
+        span(t_lang(p18n$required_fields, language_input()))
       )
     })
 
@@ -210,7 +134,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
       tags$label(
         class = "input-label",
         tags$i(class = "fa fa-handshake-o"),
-        span(if(language_input() == "ENG") "What's the context of the exchange?" else "Quel est le contexte de l'échange ?")
+        span(t_lang(p18n$context_label, language_input()))
       )
     })
 
@@ -219,7 +143,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
       tags$label(
         class = "input-label",
         tags$i(class = "fa fa-user"),
-        span(if(language_input() == "ENG") "Who's your pitch addressed to?" else "À qui est adressé votre pitch ?")
+        span(t_lang(p18n$recipient_label, language_input()))
       )
     })
 
@@ -228,7 +152,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
       tags$label(
         class = "input-label",
         tags$i(class = "fa fa-sitemap"),
-        span(if(language_input() == "ENG") "Hierarchical status of the Recipient" else "Statut hiérarchique du destinataire")
+        span(t_lang(p18n$hierarchical_label, language_input()))
       )
     })
 
@@ -240,7 +164,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
           tags$i(class = "fa fa-plus-circle", style = "color: #3498db; margin-right: 8px;"),
           tags$span(
             style = "color: #3498db; font-weight: 500;",
-            if(language_input() == "ENG") "Additional Details" else "Détails supplémentaires"
+            t_lang(p18n$optional_toggle, language_input())
           )
         ),
         style = "text-decoration: none;"
@@ -252,7 +176,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
       tags$label(
         class = "input-label",
         tags$i(class = "fa fa-id-card"),
-        span(if(language_input() == "ENG") "Background of your recipient/ personality" else "Contexte/ parcours/ personnalité de votre interlocuteur/ destinataire")
+        span(t_lang(p18n$background_label, language_input()))
       )
     })
 
@@ -261,7 +185,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
       tags$label(
         class = "input-label",
         tags$i(class = "fa fa-building"),
-        span(if(language_input() == "ENG") "Sector of activity of your recipient" else "Secteur d'activité de votre interlocuteur/ destinataire")
+        span(t_lang(p18n$activity_label, language_input()))
       )
     })
 
@@ -270,85 +194,62 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
       tags$label(
         class = "input-label",
         tags$i(class = "fa fa-graduation-cap"),
-        span(if(language_input() == "ENG") "Expertise of your recipient" else "Expertise de votre interlocuteur/ destinataire")
+        span(t_lang(p18n$expertise_label, language_input()))
       )
     })
 
-    # GPT Language Label
-    output$gpt_language_label_ui <- renderUI({
+    output$expectations_section_header <- renderUI({
       tags$label(
         class = "input-label",
-        tags$i(class = "fa fa-language"),
-        span(if(language_input() == "ENG") "Select language for GPT responses:" else "Sélectionner la langue pour les réponses GPT :")
+        tags$i(class = "fas fa-star"),
+        span(t_lang(p18n$expectations_label, language_input()))
       )
     })
 
     output$expectations_grid <- renderUI({
-      div(class = "expectations-grid",
-          # First Level
-          div(class = "radio-card",
-              tags$input(type = "radio", id = ns("level_1"), name = ns("expectation_level"), value = if(language_input() == "ENG") "High" else "Elevé"),
-              tags$label(`for` = ns("level_1"),
-                         span(class = "expectation-label",
-                              if(language_input() == "ENG") "High" else "Élevé"),
-                         span(class = "expectation-description",
-                              if(language_input() == "ENG") "Standard excellence" else "Excellence standard"),
-                         div(class = "expectation-progress",
-                             div(class = "expectation-progress-bar"))
-              )
-          ),
+      lang <- language_input()
+      default_level <- if (lang == "ENG") "High" else "Elev\u00e9"
+      selected <- input$expectations_level %||% rv$expectations_level %||% default_level
+      levels <- p18n$expectations_levels[[lang]]
 
-          # Second Level
-          div(class = "radio-card",
-              tags$input(type = "radio", id = ns("level_2"), name = ns("expectation_level"), value = if(language_input() == "ENG") "Very High" else "Très élevé"),
-              tags$label(`for` = ns("level_2"),
-                         span(class = "expectation-label",
-                              if(language_input() == "ENG") "Very High" else "Très élevé"),
-                         span(class = "expectation-description",
-                              if(language_input() == "ENG") "Superior quality" else "Qualité supérieure"),
-                         div(class = "expectation-progress",
-                             div(class = "expectation-progress-bar"))
-              )
-          ),
-
-          # Third Level
-          div(class = "radio-card",
-              tags$input(type = "radio", id = ns("level_3"), name = ns("expectation_level"), value = if(language_input() == "ENG") "Exceptional" else "Exceptionnellement élevé"),
-              tags$label(`for` = ns("level_3"),
-                         span(class = "expectation-label",
-                              if(language_input() == "ENG") "Exceptional" else "Exceptionnel"),
-                         span(class = "expectation-description",
-                              if(language_input() == "ENG") "Outstanding performance" else "Performance exceptionnelle"),
-                         div(class = "expectation-progress",
-                             div(class = "expectation-progress-bar"))
-              )
+      div(
+        class = "expectations-grid",
+        lapply(levels, function(level) {
+          div(
+            class = if (identical(selected, level$value)) "expectation-card selected" else "expectation-card",
+            onclick = sprintf(
+              "Shiny.setInputValue('%s', '%s', {priority: 'event'})",
+              ns("expectations_level"),
+              level$value
+            ),
+            span(class = "expectation-label", level$label),
+            span(class = "expectation-description", level$desc)
           )
+        })
       )
     })
 
 
+
+    # Debounce expensive pitch-text derived reactives (summary / recap).
+    pitch_text_debounced <- shiny::debounce(
+      reactive(input$text_input_pitch_improver %||% ""),
+      millis = 300
+    )
 
     # Create a reactive value to track input validity
     input_is_valid <- reactive({
       !is.null(input$communication_context) &&
         !is.null(input$recipient_of_the_pitch) &&
         !is.null(input$hierarchical_status) &&
-        nchar(input$text_input_pitch_improver) > 100
+        nchar(pitch_text_debounced()) > 100
     })
 
     output$informative_message <- renderUI({
       if (!input_is_valid()) {
         lang <- language_input()
-        message <- if (lang == "ENG") {
-          "Please fill in all required fields and enter a pitch with more than 100 characters."
-        } else {
-          "Veuillez remplir tous les champs obligatoires et entrer un pitch de plus de 100 caractères."
-        }
-        div(
-          class = "informative-message",
-          style = "color: red; font-size: 14px; margin-top: 10px;",
-          message
-        )
+        message <- t_lang(p18n$validation_message, lang)
+        div(class = "informative-message", message)
       }
     })
 
@@ -364,47 +265,85 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
     output$gpt_language_ui <- renderUI({
       lang <- language_input()
 
-      choices_lang <- if (lang == "ENG") {
-        c("French" = "FR", "English" = "ENG")
-      } else {
-        c("Français" = "FR", "Anglais" = "ENG")
-      }
-
       selected_lang <- if (lang == "ENG") "ENG" else "FR"
 
       selectInput(
         ns("gpt_language_messages"),
-        label = if (lang == "ENG") "Select language for GPT responses:" else "Sélectionner la langue pour les réponses GPT :",
-        choices = choices_lang,
+        label = t_lang(p18n$gpt_language_label, lang),
+        choices = p18n$gpt_language_choices[[lang]],
         width = "100%",
         selected = selected_lang
       )
     })
 
-    # App description
     output$app_description <- renderUI({
       lang <- language_input()
+      div(
+        class = "section-hero pitch-hero",
+        div(class = "section-hero-icon", tags$i(class = "fas fa-bullhorn")),
+        div(
+          class = "section-hero-text",
+          h2(t_lang(p18n$hero_title, lang), class = "section-hero-title"),
+          p(t_lang(p18n$hero_subtitle, lang), class = "section-hero-subtitle")
+        )
+      )
+    })
 
-      if (lang == "ENG") {
-        HTML('<h2 style="font-size: 16px;">Preparing your application for your future position? This application helps you improve your professional pitches in various communication contexts. You can tailor the analysis according to specific criteria such as your recipient, the level of exigency, and more. The application operates using generative artificial intelligence. By nature, responses will vary each time a report is generated. The application does not in any way replace the advice of an expert.</h2>')
-      } else if (lang == "FR") {
-        HTML('<h2 style="font-size: 16px;">Vous préparez votre candidature pour votre futur poste ? Cette application vous permet d\'améliorer vos pitchs professionnels dans différents contextes d\'échange. Vous pouvez calibrer l\'analyse selon des critères spécifiques tels que votre destinataire, le niveau d\'exigence, etc. L\'application fonctionne à l\'aide d\'intelligences artificielles de type génératives. Par nature, les réponses seront différentes à chaque fois qu\'un rapport est généré. L\'application ne remplace en aucun cas les avis d\'un expert.</h2>')
-      } else {
-        HTML('<h2 style="font-size: 18px;">Language Not Supported</h2>')
-      }
+    output$pitch_char_progress <- renderUI({
+      lang <- language_input()
+      text_len <- nchar(pitch_text_debounced())
+      target <- 100
+      max_chars <- security_limits_cfg$max_pitch_chars %||% 4000L
+      pct <- min(100, round((text_len / target) * 100))
+      over_max <- text_len > max_chars
+
+      div(
+        class = "char-progress",
+        div(
+          class = "char-progress-header",
+          span(t_lang(p18n$char_progress_label, lang)),
+          span(
+            class = if (over_max) {
+              "char-progress-count over"
+            } else if (text_len >= target) {
+              "char-progress-count ready"
+            } else {
+              "char-progress-count"
+            },
+            sprintf("%d / %d (max %d)", text_len, target, max_chars)
+          )
+        ),
+        div(
+          class = "char-progress-track",
+          div(class = "char-progress-fill", style = sprintf("width: %d%%;", pct))
+        )
+      )
     })
 
     # User text area
     output$pitch_improver_user_text_area <- renderUI({
-      label_text <- if (language_input() == "ENG") {
-        "Pitch to analyze:"
+      lang <- language_input() %||% "FR"
+      label_text <- t_lang(p18n$pitch_label, lang)
+      default_text <- t_lang(p18n$pitch_default, lang)
+      sample_texts <- c(
+        t_lang(p18n$pitch_default, "FR"),
+        t_lang(p18n$pitch_default, "ENG")
+      )
+      current <- isolate(input$text_input_pitch_improver)
+      value <- if (
+        is.null(current) ||
+          !nzchar(trimws(current)) ||
+          current %in% sample_texts
+      ) {
+        default_text
       } else {
-        "Pitch à analyser :"
+        current
       }
 
       textAreaInput(
         inputId = ns("text_input_pitch_improver"),
         label = label_text,
+        value = value,
         rows = 9,
         width = "100%"
       )
@@ -412,11 +351,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
 
     # GPT button
     output$gpt_button_pitch_improver <- renderUI({
-      button_label <- if (gpt_language_input() == "ENG") {
-        "Start Analysis 🚀"
-      } else {
-        "Démarrer l'analyse 🚀"
-      }
+      button_label <- paste0(t_lang(p18n$analyze_button, language_input()), " \U0001f680")
 
       disabled <- !input_is_valid()
 
@@ -427,26 +362,13 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
       )
     })
 
-    # Reading speed slider
-    output$reading_speed_slider <- renderUI({
-      req(language_input())
-      label <- if (language_input() == "ENG") {
-        "Adjust Reading Speed (Words Per Minute):"
-      } else {
-        "Ajuster la vitesse de lecture (mots par minute) pour calibrer l'estimation de la durée du pitch à l'oral :"
-      }
-
-      sliderInput(ns("reading_speed"), label, value = 150, min = 90, max = 180, width = "100%")
-    })
-
-    # Pitch recipient
     output$recipient_of_the_pitch_ui <- renderUI({
       div(
         class = "pitch-recipient-input-wrapper",
         textInput(
           inputId = ns("recipient_of_the_pitch"),
           label = NULL,
-          placeholder = if(language_input() == "ENG") "Enter recipient name..." else "Entrez le nom du destinataire..."
+          placeholder = t_lang(p18n$recipient_placeholder, language_input())
         ) %>% tagAppendAttributes(class = "pitch-recipient-input")
       )
     })
@@ -490,20 +412,20 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
           } else {
             list(
               "Candidature" = c(
-                "Candidature spontanée" = "spontaneous_application",
-                "Réponse à une offre" = "offer_reply"
+                "Candidature spontan\u00e9e" = "spontaneous_application",
+                "R\u00e9ponse \u00e0 une offre" = "offer_reply"
               ),
               "Entretiens" = c(
-                "Entretien téléphonique" = "phone_screening",
+                "Entretien t\u00e9l\u00e9phonique" = "phone_screening",
                 "Entretien individuel" = "one_on_one_interview"
               ),
-              "Réunions" = c(
-                "Réunion formelle" = "first_formal_meeting",
-                "Réunion informelle" = "first_informal_meeting"
+              "R\u00e9unions" = c(
+                "R\u00e9union formelle" = "first_formal_meeting",
+                "R\u00e9union informelle" = "first_informal_meeting"
               ),
-              "Réseautage" = c(
-                "Événement de réseautage" = "networking_event",
-                "Suivi après un événement de réseautage" = "followup_after_networking"
+              "R\u00e9seautage" = c(
+                "\u00c9v\u00e9nement de r\u00e9seautage" = "networking_event",
+                "Suivi apr\u00e8s un \u00e9v\u00e9nement de r\u00e9seautage" = "followup_after_networking"
               ),
               "Offres d'emploi" = c(
                 "Acceptation d'offre d'emploi" = "job_offer_acceptance",
@@ -512,7 +434,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
               ),
               "Post-Entretien" = c(
                 "Demande de retour d'information" = "asking_for_feedback",
-                "Suivi après l'entretien" = "followup_after_interview"
+                "Suivi apr\u00e8s l'entretien" = "followup_after_interview"
               )
             )
           },
@@ -529,7 +451,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         class = "form-group",
         tags$label(
           class = "input-label",
-          if (language_input() == "ENG") "Background of your recipient/ personality" else "Contexte/ parcours/ personnalité de votre interlocuteur/ destinataire"
+          t_lang(p18n$background_label, language_input())
         ),
         textInput(ns("recipients_background"), label = NULL)
       )
@@ -541,7 +463,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         class = "form-group",
         tags$label(
           class = "input-label",
-          if (language_input() == "ENG") "Sector of activity of your recipient" else "Secteur d'activité de votre interlocuteur/ destinataire"
+          t_lang(p18n$activity_label, language_input())
         ),
         textInput(ns("recipients_activity"), label = NULL)
       )
@@ -553,7 +475,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         class = "form-group",
         tags$label(
           class = "input-label",
-          if (language_input() == "ENG") "Expertise of your recipient" else "Expertise de votre interlocuteur/ destinataire"
+          t_lang(p18n$expertise_label, language_input())
         ),
         textInput(ns("recipients_expertise"), label = NULL)
       )
@@ -563,36 +485,19 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
 
 
 
-    # Hierarchical status
-    # Initialize hierarchical_status with a default value
-    rv <- reactiveValues(hierarchical_status = "entry_level")
-
     observe({
       req(input$hierarchical_status)
       rv$hierarchical_status <- input$hierarchical_status
     })
 
-    # Hierarchical status
+    observeEvent(input$expectations_level, {
+      rv$expectations_level <- input$expectations_level
+    }, ignoreNULL = FALSE)
+
     output$hierarchical_status_ui <- renderUI({
       selected_status <- input$hierarchical_status %||% "entry_level"
 
-      choices <- if (language_input() == "ENG") {
-        list(
-          entry_level = list(icon = "user", label = "Entry Level"),
-          manager = list(icon = "user-tie", label = "Manager"),
-          senior_manager = list(icon = "users", label = "Senior Manager"),
-          director = list(icon = "user-graduate", label = "Director"),
-          ceo = list(icon = "crown", label = "CEO")
-        )
-      } else {
-        list(
-          entry_level = list(icon = "user", label = "Débutant"),
-          manager = list(icon = "user-tie", label = "Manager"),
-          senior_manager = list(icon = "users", label = "Manager Senior"),
-          director = list(icon = "user-graduate", label = "Directeur"),
-          ceo = list(icon = "crown", label = "PDG")
-        )
-      }
+      choices <- p18n$hierarchical_roles[[language_input()]]
 
       tagList(
         tags$div(
@@ -619,123 +524,41 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
       )
     })
 
-    # Expectation level
-    output$expectations_level_ui <- renderUI({
-      label <- if (language_input() == "ENG") "Level of expectations" else "Niveau d'attentes"
-      choices <- if (language_input() == "ENG") {
-        c("High" = "High", "Very high" = "Very high", "Exceptionally High Expectations" = "Exceptionally High")
-      } else {
-        c("Elevé" = "Elevé", "Très élevé" = "Très élevé", "Exceptionnellement élevé" = "Exceptionnellement élevé")
-      }
-      radioButtons(inputId = ns("expectations_level"), label = label, choices = choices, selected = "Elevé")
-    })
-
-    # Main indicators
-    output$main_indicators_output <- renderUI({
-      req(language_input())
-      donnees <- reactive_summary_data()
-      lang <- language_input()
-
-      labels <- if(lang == "ENG") {
-        c("Total characters", "Total words", "Total sentences", "Total paragraphs", "Pitch length (s)")
-      } else {
-        c("Nombre de caractères", "Nombre de mots", "Nombre de phrases", "Nombre de paragraphes", "Durée du pitch (s)")
-      }
-
-      html_content <- sprintf('
-  <div class="stats-container">
-    <div class="stat-item">
-      <div class="stat-value">%s</div>
-      <div class="stat-label">%s</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value">%s</div>
-      <div class="stat-label">%s</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value">%s</div>
-      <div class="stat-label">%s</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value">%s</div>
-      <div class="stat-label">%s</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-value">%s</div>
-      <div class="stat-label">%s</div>
-    </div>
-  </div>',
-                              donnees[[1]], labels[1],
-                              donnees[[2]], labels[2],
-                              donnees[[3]], labels[3],
-                              donnees[[4]], labels[4],
-                              donnees[[5]], labels[5]
-      )
-
-      HTML(html_content)
-    })
-
-
-
-
-    # Create a reactive expression to calculate summary
     reactive_summary_data <- reactive({
-      req(input$reading_speed, language_input())
-      calculate_summary(input$text_input_pitch_improver, input$reading_speed, language=language_input())
+      req(language_input())
+      calculate_summary(pitch_text_debounced(), language = language_input())
     })
-
 
     observeEvent(input$toggle_optional, {
       shinyjs::toggle(id = "optional_fields", anim = TRUE)
     })
 
-
-
     output$main_indicators_output <- renderUI({
       req(language_input())
       donnees <- reactive_summary_data()
       lang <- language_input()
 
-      # Définir les étiquettes selon la langue
-      labels <- if(lang == "ENG") {
-        c("Total characters", "Total words", "Total sentences", "Total paragraphs", "Pitch length (s)")
-      } else {
-        c("Nombre de caractères", "Nombre de mots", "Nombre de phrases", "Nombre de paragraphes", "Durée du pitch (s)")
-      }
+      # D\u00e9finir les \u00e9tiquettes selon la langue
+      labels <- p18n$stats_labels[[lang]]
 
       # Construire le HTML
+      icons <- c("fa-font", "fa-align-left", "fa-paragraph", "fa-layer-group")
       html_content <- paste0(
-        '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">',
         '<div class="stats-container">',
         paste0(
-          '<div class="stat-item">',
-          '<div class="stat-background"></div>',
-          '<span class="stat-value">', donnees[[1]], '</span>',
-          '<span class="stat-label">', labels[1], '</span>',
-          '</div>',
-          '<div class="stat-item">',
-          '<div class="stat-background"></div>',
-          '<span class="stat-value">', donnees[[2]], '</span>',
-          '<span class="stat-label">', labels[2], '</span>',
-          '</div>',
-          '<div class="stat-item">',
-          '<div class="stat-background"></div>',
-          '<span class="stat-value">', donnees[[3]], '</span>',
-          '<span class="stat-label">', labels[3], '</span>',
-          '</div>',
-          '<div class="stat-item">',
-          '<div class="stat-background"></div>',
-          '<span class="stat-value">', donnees[[4]], '</span>',
-          '<span class="stat-label">', labels[4], '</span>',
-          '</div>',
-          '<div class="stat-item">',
-          '<div class="stat-background"></div>',
-          '<span class="stat-value">', donnees[[5]], '</span>',
-          '<span class="stat-label">', labels[5], '</span>',
-          '</div>',
-          '</div>'
+          vapply(seq_along(labels), function(i) {
+            paste0(
+              '<div class="stat-item">',
+              '<div class="stat-icon"><i class="fas ', icons[i], '"></i></div>',
+              '<div class="stat-background"></div>',
+              '<span class="stat-value">', donnees[[i]], '</span>',
+              '<span class="stat-label">', labels[i], '</span>',
+              '</div>'
+            )
+          }, character(1)),
+          collapse = ""
         ),
-        collapse = ""
+        '</div>'
       )
 
       HTML(html_content)
@@ -765,7 +588,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         construct_sentence(
           input$recipient_of_the_pitch,
           "<br><b>Pitch recipient</b>: ",
-          "<br><b>Le pitch s'adresse à</b> : ",
+          "<br><b>Le pitch s'adresse \u00e0</b> : ",
           lang,
           TRUE,
           translations
@@ -773,7 +596,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         construct_sentence(
           input$recipients_background,
           "<br><b>Personality or background of the recipient of the pitch</b>: ",
-          "<br><b>Personnalité ou parcours du destinataire</b> :",
+          "<br><b>Personnalit\u00e9 ou parcours du destinataire</b> :",
           lang,
           TRUE,
           translations
@@ -781,7 +604,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         construct_sentence(
           input$recipients_activity,
           "<br><b>Activity sector of the recipient</b>: ",
-          "<br><b>Secteur d'activité du destinataire</b> : ",
+          "<br><b>Secteur d'activit\u00e9 du destinataire</b> : ",
           lang,
           TRUE,
           translations
@@ -797,13 +620,14 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         construct_sentence_niveau(
           input$hierarchical_status,
           "<br><b>Hierarchical status of the recipient</b>: ",
-          "<br><b>Statut hiérarchique du destinataire</b> : ",
+          "<br><b>Statut hi\u00e9rarchique du destinataire</b> : ",
           lang,
           FALSE,
-          hierarchical_status_labels
+          hierarchical_status_labels,
+          unknown_label = t_lang(p18n$unknown_choice, lang)
         ),
         construct_general_sentence(
-          input$expectations_level,
+          input$expectations_level %||% if (lang == "ENG") "High" else "Elev\u00e9",
           "<br><b>Level of expectations</b>: ",
           "<br><b>Niveau d'exigence</b> : ",
           lang,
@@ -811,21 +635,31 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         )
       )
       sentences_with_content <- sentences[sentences != ""]
-      final_message_for_api <- paste(c(sentences_with_content, "<br><b>Pitch</b>: ", input$text_input_pitch_improver), collapse = " ")
+      final_message_for_api <- paste(
+        c(sentences_with_content, "<br><b>Pitch</b>: ", pitch_text_debounced()),
+        collapse = " "
+      )
       final_message_for_api
     })
 
 
 
-    # Recap prompt
+    # Recap prompt (escape free-text pitch to avoid XSS from user content)
     output$recap_prompt <- renderUI({
-      if (!is.null(prompt_summary_for_user()) && nchar(prompt_summary_for_user()) > 0) {
+      lang <- language_input()
+      summary <- prompt_summary_for_user()
+      if (!is.null(summary) && nchar(summary) > 0) {
+        safe_summary <- htmltools::htmlEscape(summary)
+        # Allow the intentional <br>/<b> markers from construct_sentence helpers
+        safe_summary <- gsub("&lt;br&gt;", "<br>", safe_summary, fixed = TRUE)
+        safe_summary <- gsub("&lt;b&gt;", "<b>", safe_summary, fixed = TRUE)
+        safe_summary <- gsub("&lt;/b&gt;", "</b>", safe_summary, fixed = TRUE)
         tagList(
-          HTML(prompt_summary_for_user()),
-          tags$script('showTextSlowly();')
+          HTML(safe_summary),
+          tags$script("showTextSlowly();")
         )
       } else {
-        HTML("<p>No prompt summary available yet.</p>")
+        HTML(sprintf("<p>%s</p>", htmltools::htmlEscape(t_lang(p18n$recap_empty, lang))))
       }
     })
 
@@ -842,15 +676,39 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
     observeEvent(input$gpt_update_pitch_improver_button, {
       req(input_is_valid())
       user_input <- prompt_summary_for_user()
+      pitch_text <- input$text_input_pitch_improver %||% ""
       lang <- gpt_language_input()
       ui_lang <- language_input()
+
+      if (!nzchar(api_key %||% "")) {
+        showNotification(
+          t_lang(p18n$notify_api_key_missing, ui_lang),
+          type = "error",
+          duration = NULL
+        )
+        return()
+      }
+
+      if (!is.null(usage_guard)) {
+        budget <- usage_guard$check_pitch_run(pitch_text)
+        if (!isTRUE(budget$ok)) {
+          showNotification(
+            usage_guard_message(budget, translations, ui_lang, feature = "pitch"),
+            type = "warning",
+            duration = 8
+          )
+          return()
+        }
+        usage_guard$begin_pitch_run()
+      }
+      rv$analysis_in_flight <- TRUE
 
       # Define admin prompts
       admin_prompt_orthography_and_grammar <- reactive({
         if(lang == "ENG") {
           "Analyze only the grammar and orthography of the user's pitch and give insights only on what needs to be changed or improved. No other aspects. Maintain a neutral tone. Format the text to include line breaks or bold text to improve readability. Limit response to 400 characters. ANSWER ONLY IN ENGLISH."
         } else {
-          "Analyse uniquement la grammaire et l'orthographe du pitch de l'utilisateur et fais un retour uniquement sur les aspects à modifier ou à améliorer. Aucun autre aspect. Ton neutre. Utilise des bullets points, des sauts de ligne ou du HTML pour améliorer la lisibilité. Limiter la réponse à 400 caractères. REPONDS UNIQUEMENT EN FRANCAIS."
+          "Analyse uniquement la grammaire et l'orthographe du pitch de l'utilisateur et fais un retour uniquement sur les aspects \u00e0 modifier ou \u00e0 am\u00e9liorer. Aucun autre aspect. Ton neutre. Utilise des bullets points, des sauts de ligne ou du HTML pour am\u00e9liorer la lisibilit\u00e9. Limiter la r\u00e9ponse \u00e0 400 caract\u00e8res. REPONDS UNIQUEMENT EN FRANCAIS."
         }
       })
 
@@ -858,7 +716,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         if(lang == "ENG") {
           "Analyze only the structure of the user's pitch. The pitch must be logically organized, without contradictions or ambiguities. No other aspects. Maintain a neutral tone. Format the text to include line breaks or bold text to improve readability. Limit response to 400 characters. ANSWER ONLY IN ENGLISH."
         } else {
-          "Analyse la structure, la clarté, la cohérence et le sens du pitch fourni par l'utilisateur. Aucun autre aspect. Ton neutre. Utilisez le HTML ou des sauts de ligne pour la lisibilité. Limite de 400 caractères. REPONDS UNIQUEMENT EN FRANCAIS."
+          "Analyse la structure, la clart\u00e9, la coh\u00e9rence et le sens du pitch fourni par l'utilisateur. Aucun autre aspect. Ton neutre. Utilisez le HTML ou des sauts de ligne pour la lisibilit\u00e9. Limite de 400 caract\u00e8res. REPONDS UNIQUEMENT EN FRANCAIS."
         }
       })
 
@@ -866,7 +724,7 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         if(lang == "ENG") {
           "Generate questions the recipient might have after receiving the user's pitch. Nothing else. Maintain a neutral tone. Format the text to include line breaks or bold text to improve readability. Limit response to 500 characters. ANSWER ONLY IN ENGLISH."
         } else {
-          "Génère des questions que le destinataire pourrait avoir après avoir reçu le pitch de l'utilisateur. Aucune autre chose. Ton neutre. Formate le texte pour inclure des sauts de ligne ou de la police en gras pour améliorer la lisibilité. Limiter la réponse à 500 caractères. REPONDS UNIQUEMENT EN FRANCAIS."
+          "G\u00e9n\u00e8re des questions que le destinataire pourrait avoir apr\u00e8s avoir re\u00e7u le pitch de l'utilisateur. Aucune autre chose. Ton neutre. Formate le texte pour inclure des sauts de ligne ou de la police en gras pour am\u00e9liorer la lisibilit\u00e9. Limiter la r\u00e9ponse \u00e0 500 caract\u00e8res. REPONDS UNIQUEMENT EN FRANCAIS."
         }
       })
 
@@ -874,122 +732,155 @@ mod_section_pitch_improver_server <- function(id, api_pwd, language_input, trans
         if(lang == "ENG") {
           "Analyze the emotional valence of the user's text. Nothing else. Maintain a neutral tone. Format the text to include line breaks or bold text to improve readability. Limit response to 400 characters. ANSWER ONLY IN ENGLISH."
         } else {
-          "Analyse la valence émotionnelle du texte de l'utilisateur. Aucune autre chose. Ton neutre. Formate le texte pour inclure des sauts de ligne ou de la police en gras pour améliorer la lisibilité. Limiter la réponse à 400 caractères. REPONDS UNIQUEMENT EN FRANCAIS."
+          "Analyse la valence \u00e9motionnelle du texte de l'utilisateur. Aucune autre chose. Ton neutre. Formate le texte pour inclure des sauts de ligne ou de la police en gras pour am\u00e9liorer la lisibilit\u00e9. Limiter la r\u00e9ponse \u00e0 400 caract\u00e8res. REPONDS UNIQUEMENT EN FRANCAIS."
         }
       })
 
+      finish_pitch_run <- function(success = TRUE) {
+        rv$analysis_in_flight <- FALSE
+        if (!is.null(usage_guard)) {
+          if (isTRUE(success)) {
+            usage_guard$record_api_calls(security_limits_cfg$pitch_batch_cost %||% 4L)
+          }
+          usage_guard$end_pitch_run(success = success)
+        }
+        removeModal()
+      }
+
       # Orthography and Grammar Analysis
       showModal(modalDialog(
-        if (ui_lang == "ENG") "Analyzing orthography and grammar..." else "Analyse de l'orthographe et de la grammaire en cours...",
+        t_lang(p18n$modal_orthography, ui_lang),
         easyClose = FALSE
       ))
 
       future::future({
         fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_orthography_and_grammar(), "gpt-4o-mini")
       }) %>%
-        promises::then(function(result) {
-          responses$orthography_and_grammar <- result
-          removeModal()
+        promises::then(
+          function(result) {
+            responses$orthography_and_grammar <- result
+            removeModal()
 
-          # Structure Analysis
-          showModal(modalDialog(
-            if (ui_lang == "ENG") "Analyzing structure..." else "Analyse de la structure en cours...",
-            easyClose = FALSE
-          ))
+            # Structure Analysis
+            showModal(modalDialog(
+              t_lang(p18n$modal_structure, ui_lang),
+              easyClose = FALSE
+            ))
 
-          future::future({
-            fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_structure_and_coherence(), "gpt-4o-mini")
-          }) %>%
-            promises::then(function(result) {
-              responses$structure_and_coherence <- result
-              removeModal()
-
-              # Potential Questions Analysis
-              showModal(modalDialog(
-                if (ui_lang == "ENG") "Generating potential questions..." else "Génération des questions éventuelles...",
-                easyClose = FALSE
-              ))
-
-              future::future({
-                fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_potential_questions(), "gpt-4o-mini")
-              }) %>%
-                promises::then(function(result) {
-                  responses$potential_questions <- result
+            future::future({
+              fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_structure_and_coherence(), "gpt-4o-mini")
+            }) %>%
+              promises::then(
+                function(result) {
+                  responses$structure_and_coherence <- result
                   removeModal()
 
-                  # Sentiment Analysis
+                  # Potential Questions Analysis
                   showModal(modalDialog(
-                    if (ui_lang == "ENG") "Analyzing emotional valence..." else "Analyse de la valence émotionnelle en cours...",
+                    t_lang(p18n$modal_questions, ui_lang),
                     easyClose = FALSE
                   ))
 
                   future::future({
-                    fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_sentiment_response(), "gpt-4o-mini")
+                    fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_potential_questions(), "gpt-4o-mini")
                   }) %>%
-                    promises::then(function(result) {
-                      responses$sentiment <- result
-                      removeModal()
-                    })
-                })
-            })
-        })
+                    promises::then(
+                      function(result) {
+                        responses$potential_questions <- result
+                        removeModal()
+
+                        # Sentiment Analysis
+                        showModal(modalDialog(
+                          t_lang(p18n$modal_sentiment, ui_lang),
+                          easyClose = FALSE
+                        ))
+
+                        future::future({
+                          fct_interact_with_gpt_api_only_text(api_key, user_input, admin_prompt_sentiment_response(), "gpt-4o-mini")
+                        }) %>%
+                          promises::then(
+                            function(result) {
+                              responses$sentiment <- result
+                              finish_pitch_run(success = TRUE)
+                            },
+                            onRejected = function(e) {
+                              finish_pitch_run(success = FALSE)
+                              showNotification(conditionMessage(e), type = "error", duration = NULL)
+                            }
+                          )
+                      },
+                      onRejected = function(e) {
+                        finish_pitch_run(success = FALSE)
+                        showNotification(conditionMessage(e), type = "error", duration = NULL)
+                      }
+                    )
+                },
+                onRejected = function(e) {
+                  finish_pitch_run(success = FALSE)
+                  showNotification(conditionMessage(e), type = "error", duration = NULL)
+                }
+              )
+          },
+          onRejected = function(e) {
+            finish_pitch_run(success = FALSE)
+            showNotification(conditionMessage(e), type = "error", duration = NULL)
+          }
+        )
     })
 
     ####################
 
+    render_analysis_card <- function(title, icon_name, content) {
+      div(
+        class = "analysis-card",
+        div(
+          class = "analysis-card-header",
+          tags$i(class = paste0("fas fa-", icon_name)),
+          title
+        ),
+        div(class = "analysis-card-body", renderMarkdown(content))
+      )
+    }
+
     output$orthography_and_grammar <- renderUI({
       req(responses$orthography_and_grammar)
-      header <- if(gpt_language_input() == "ENG") {
-        "Orthography and Grammar"
-      } else {
-        "Orthographe et grammaire"
-      }
-      column(width=12,
-             h3(header),
-             renderMarkdown(responses$orthography_and_grammar)
-      )
+      title <- t_lang(p18n$analysis_orthography, language_input())
+      render_analysis_card(title, "spell-check", responses$orthography_and_grammar)
     })
 
     output$structure_and_coherence <- renderUI({
       req(responses$structure_and_coherence)
-      header <- if(gpt_language_input() == "ENG") {
-        "Structure and Coherence"
-      } else {
-        "Structure et cohérence"
-      }
-      column(width=12,
-             h3(header),
-             renderMarkdown(responses$structure_and_coherence)
-      )
+      title <- t_lang(p18n$analysis_structure, language_input())
+      render_analysis_card(title, "project-diagram", responses$structure_and_coherence)
     })
 
     output$potential_questions <- renderUI({
       req(responses$potential_questions)
-      header <- if(gpt_language_input() == "ENG") {
-        "Potential Questions"
-      } else {
-        "Questions éventuelles"
-      }
-      column(width=12,
-             h3(header),
-             renderMarkdown(responses$potential_questions)
-      )
+      title <- t_lang(p18n$analysis_questions, language_input())
+      render_analysis_card(title, "question-circle", responses$potential_questions)
     })
 
     output$sentiment <- renderUI({
       req(responses$sentiment)
-      header <- if(gpt_language_input() == "ENG") {
-        "Emotional Valence"
-      } else {
-        "Valence émotionnelle"
-      }
-      column(width=12,
-             h3(header),
-             renderMarkdown(responses$sentiment)
-      )
+      title <- t_lang(p18n$analysis_sentiment, language_input())
+      render_analysis_card(title, "heart", responses$sentiment)
     })
 
-
+    for (out_id in c(
+      "required_fields_header", "context_label_ui", "recipient_label_ui",
+      "hierarchical_label_ui", "optional_fields_header", "background_label_ui",
+      "activity_label_ui", "expertise_label_ui", "expectations_section_header",
+      "expectations_grid", "informative_message", "gpt_language_ui",
+      "app_description", "pitch_char_progress", "pitch_improver_user_text_area",
+      "gpt_button_pitch_improver", "recipient_of_the_pitch_ui",
+      "communication_context_ui", "recipients_background_ui",
+      "recipients_activity_ui", "recipients_expertise_ui",
+      "hierarchical_status_ui", "main_indicators_output", "recap_prompt",
+      "orthography_and_grammar", "structure_and_coherence", "potential_questions",
+      "sentiment"
+    )) {
+      outputOptions(output, out_id, suspendWhenHidden = FALSE)
+    }
 
   })
 }

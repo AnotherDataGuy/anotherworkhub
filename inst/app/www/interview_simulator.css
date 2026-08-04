@@ -1,394 +1,781 @@
-/* ==========================================================================
-   1. THEME VARIABLES
-   Define color schemes and shared variables for light/dark themes
-   ========================================================================== */
-:root {
-  /* Light theme colors */
-  --light-bg-primary: #ffffff;
-  --light-bg-secondary: #f9f9f9;
-  --light-text-primary: #2d3748;
-  --light-text-secondary: #4a5568;
-  --light-border: #e2e8f0;
-  --light-shadow: rgba(0, 0, 0, 0.1);
+/* Interview simulator */
 
-  /* Dark theme colors */
-  --dark-bg-primary: #1a202c;
-  --dark-bg-secondary: #2d3748;
-  --dark-text-primary: #f7fafc;
-  --dark-text-secondary: #e2e8f0;
-  --dark-border: #4a5568;
-  --dark-shadow: rgba(0, 0, 0, 0.3);
-
-  /* Shared colors - Used across both themes */
-  --accent-color: #3498db;
-  --accent-hover: #2980b9;
-  --success-color: #34c759;
-  --user-message-dark: #2c5282;
-  --user-message-light: #4299e1;
+.interview-simulator-section {
+  padding: 0.25rem 0 0;
 }
 
-/* ==========================================================================
-   2. CHAT INTERFACE
-   Styles for the chat container and message bubbles
-   ========================================================================== */
-/* 2.1 Chat Container */
-.chat-container {
+.interview-accordion-panel {
+  border-radius: var(--awh-radius-md);
+  background: var(--awh-surface-inset);
+  border: 1px solid var(--awh-border);
+  overflow: visible;
+}
+
+.interview-setup-panel {
+  overflow: visible;
+}
+
+.interview-setup-panel .shiny-input-container {
+  position: relative;
+  z-index: 1;
+}
+
+.interview-setup-panel .shiny-input-container:focus-within {
+  z-index: 20;
+}
+
+.interview-chat-col {
   display: flex;
   flex-direction: column;
-  height: 500px;
-  padding: 15px;
-  overflow-y: auto;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  /* Light theme defaults */
-  background-color: var(--light-bg-secondary);
-  border: 1px solid var(--light-border);
-  box-shadow: 0 4px 10px var(--light-shadow);
-  color: var(--light-text-primary);
+  min-height: 0;
 }
 
-/* Dark theme overrides */
-.dark-mode .chat-container {
-  background-color: var(--dark-bg-secondary);
-  border: 1px solid var(--dark-border);
-  box-shadow: 0 4px 10px var(--dark-shadow);
-  color: var(--dark-text-primary);
+/* Chat panel hidden until the interview starts */
+.interview-layout:not(.interview-layout--live) > .interview-chat-col {
+  display: none;
 }
 
-/* 2.2 Chat Bubbles - Base Styles */
-.chat-bubble {
-  max-width: 80%;
-  padding: 15px;
-  margin: 1.5vw;
-  border-radius: 20px;
-  font-size: 16px;
-  line-height: 1.6;
-  position: relative;
-  box-shadow: 0 3px 6px var(--light-shadow);
+/* Base (mobile): everything stacks full width */
+.interview-layout > .interview-setup-col {
+  flex: 1 1 100% !important;
+  max-width: 100% !important;
 }
 
-/* 2.3 User Message Bubbles */
-.user-bubble {
-  background-color: var(--user-message-light);
-  color: white;
-  align-self: flex-end;
-  border-bottom-right-radius: 0;
+/* --------------------------------------------------------------------------
+   Desktop two-pane layout (settings rail + live chat)
+   Explicit rules for every state so the panes never wrap underneath
+   each other, regardless of whether the settings panel is expanded.
+   -------------------------------------------------------------------------- */
+@media (min-width: 992px) {
+  .interview-layout.awh-split-layout {
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 1.15rem;
+  }
+
+  .interview-setup-panel {
+    position: sticky;
+    top: 4rem;
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* Before the session starts: a single, centered intake form */
+  .interview-layout.awh-split-layout:not(.interview-layout--live) > .interview-setup-col {
+    flex: 0 1 760px !important;
+    max-width: 760px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  /* Live + expanded: fixed settings rail on the left */
+  .interview-layout.interview-layout--live > .interview-setup-col {
+    flex: 0 0 360px !important;
+    max-width: 360px !important;
+  }
+
+  /* Live + collapsed: thin rail */
+  .interview-layout.interview-layout--live > .interview-setup-col--collapsed {
+    flex: 0 0 3.25rem !important;
+    max-width: 3.25rem !important;
+    min-width: 3.25rem !important;
+  }
+
+  /* Chat always takes the remaining space */
+  .interview-layout.interview-layout--live > .interview-chat-col {
+    flex: 1 1 auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
 }
 
-.dark-mode .user-bubble {
-  background-color: var(--user-message-dark);
-}
-
-/* 2.4 GPT Message Bubbles */
-.gpt-bubble {
-  align-self: flex-start;
-  border-bottom-left-radius: 0;
-  background-color: var(--light-bg-primary);
-  color: var(--light-text-primary);
-}
-
-.dark-mode .gpt-bubble {
-  background-color: var(--dark-bg-primary);
-  color: var(--dark-text-primary);
-}
-
-/* ==========================================================================
-   3. SETTINGS PANEL
-   Styles for the interview settings panel
-   ========================================================================== */
-.settings-panel {
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  transition: all 0.3s ease;
-  /* Light theme defaults */
-  background: var(--light-bg-primary);
-  box-shadow: 0 2px 4px var(--light-shadow);
-}
-
-.dark-mode .settings-panel {
-  background: var(--dark-bg-primary);
-  box-shadow: 0 2px 4px var(--dark-shadow);
-}
-
-/* ==========================================================================
-   4. INPUT AREA
-   Styles for the message input area and controls
-   ========================================================================== */
-/* 4.1 Input Container */
-.input-area {
-  margin-top: 15px;
+.setup-progress {
   display: flex;
-  gap: 10px;
-  padding: 15px;
-  border-top: 1px solid var(--light-border);
-  transition: all 0.3s ease;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
-.dark-mode .input-area {
-  border-top-color: var(--dark-border);
+.setup-progress-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--awh-radius-pill);
+  background: var(--awh-accent-soft);
+  border: 1px solid var(--awh-accent-border);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--awh-text-muted);
 }
 
-/* 4.2 Textarea */
-.input-area textarea {
-  flex-grow: 1;
-  min-height: 50px;
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid var(--light-border);
-  transition: all 0.3s ease;
-  /* Light theme defaults */
-  background-color: var(--light-bg-primary);
-  color: var(--light-text-primary);
+.setup-progress-index {
+  width: 1.15rem;
+  height: 1.15rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--awh-accent);
+  color: var(--awh-text-on-accent);
+  font-size: 0.6rem;
+  font-weight: 700;
 }
 
-.dark-mode .input-area textarea {
-  background-color: var(--dark-bg-secondary);
-  color: var(--dark-text-primary);
-  border-color: var(--dark-border);
+.setup-block {
+  margin-bottom: 0.85rem;
+  padding: 0.85rem;
+  border-radius: var(--awh-radius-md);
+  background: var(--awh-surface-inset);
+  border: 1px solid var(--awh-border);
 }
 
-/* 4.3 Send Button */
-.send-button {
-  padding: 10px 20px;
-  border-radius: 8px;
-  background-color: var(--accent-color);
-  color: white;
-  border: none;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.setup-block-required {
+  border-left: 3px solid var(--awh-accent);
 }
 
-.send-button:hover {
-  background-color: var(--accent-hover);
+.setup-block-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--awh-text);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-/* ==========================================================================
-   5. BACKGROUND ELEMENTS
-   Styles for decorative background elements
-   ========================================================================== */
-.communication-context-icon {
-  position: absolute;
-}
-
-.fa-comments-o-background {
-  top: 5px;
-  left: 5px;
-  opacity: 0.4;
-  z-index: 0;
-  font-weight: 400;
-  font-size: 20vw;
-  position: absolute;
-  margin-bottom: 1.5vw;
-  /* Light theme defaults */
-  color: #e2e8f0;
-  text-shadow: 0 0 10px rgba(8, 136, 255, 0.2);
-}
-
-.dark-mode .fa-comments-o-background {
-  color: #2d3748;
-  text-shadow: 0 0 10px rgba(8, 136, 255, 0.4);
-}
-
-/* ==========================================================================
-   6. AVATAR GRID
-   Styles for the avatar selection grid
-   ========================================================================== */
-/* 6.1 Grid Layout */
-.avatar-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+.interview-accordion {
+  display: flex;
+  flex-direction: column;
   gap: 0.5rem;
-  padding: 0.5rem;
+}
+
+.interview-accordion-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.85rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--awh-text);
+  list-style: none;
+  user-select: none;
+  min-height: 2.75rem;
+}
+
+.interview-accordion-header::-webkit-details-marker {
+  display: none;
+}
+
+.interview-accordion-header::after {
+  content: "\f107";
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+  margin-left: auto;
+  opacity: 0.5;
+  transition: transform 0.2s ease;
+}
+
+.interview-accordion-panel[open] .interview-accordion-header {
+  background: var(--awh-accent-soft);
+}
+
+.interview-accordion-panel[open] .interview-accordion-header::after {
+  transform: rotate(180deg);
+}
+
+.interview-accordion-body {
+  padding: 0.65rem 0.85rem 0.85rem;
+  border-top: 1px solid var(--awh-border);
+  overflow: visible;
+}
+
+.interview-action-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--awh-border);
+}
+
+@media (min-width: 480px) {
+  .interview-action-bar {
+    flex-direction: row;
+  }
+}
+
+.btn-interview {
+  flex: 1;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  border: none;
+  font-family: var(--awh-font);
+  font-weight: 600;
+  border-radius: var(--awh-radius-sm);
+  min-height: 2.75rem;
+}
+
+.btn-interview-primary {
+  background: linear-gradient(135deg, var(--awh-accent), var(--awh-accent-hover));
+  color: var(--awh-text-on-accent);
+  box-shadow: 0 4px 16px var(--awh-accent-soft);
+}
+
+.btn-interview-secondary {
+  background: var(--awh-surface-inset);
+  color: var(--awh-text);
+  border: 1px solid var(--awh-border-strong);
+}
+
+/* Chat panel */
+.interview-chat-wrap {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  width: 100%;
+  height: clamp(420px, 65dvh, 760px);
+  min-height: 420px;
+}
+
+@media (min-width: 992px) {
+  .interview-chat-wrap {
+    height: calc(100dvh - 10.5rem);
+    max-height: calc(100dvh - 10.5rem);
+  }
+}
+
+.chat-panel-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--awh-text);
+  background: var(--awh-accent-soft);
+  border-bottom: 1px solid var(--awh-border);
+}
+
+.chat-panel-header-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.chat-container {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0.85rem;
+  gap: 0.85rem;
+  background: var(--awh-surface-inset);
+  -webkit-overflow-scrolling: touch;
+}
+
+.chat-empty-state {
+  margin: auto;
+  text-align: center;
+  color: var(--awh-text-muted);
+  padding: 1.5rem 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  max-width: 22rem;
+}
+
+.chat-empty-state .fa,
+.chat-empty-state .fas {
+  font-size: 2rem;
+  margin-bottom: 0.65rem;
+  opacity: 0.35;
+  color: var(--awh-accent);
+}
+
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.chat-message-user {
+  align-self: flex-end;
+  max-width: 92%;
+}
+
+.chat-message-gpt {
+  align-self: flex-start;
+  max-width: 100%;
   width: 100%;
 }
 
-/* 6.2 Avatar Items */
-.avatar-item {
-  position: relative;
-  cursor: pointer;
-  text-align: center;
-}
-
-.avatar-circle {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  margin: 0 auto;
+.chat-message-meta {
   display: flex;
   align-items: center;
-  justify-content: center;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  /* Light theme defaults */
-  background: var(--accent-color);
-  color: white;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--awh-text-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.dark-mode .avatar-circle {
-  background: var(--user-message-dark);
-  color: var(--dark-text-primary);
+.chat-message-user .chat-message-meta {
+  justify-content: flex-end;
 }
 
-/* 6.3 Avatar Interactions */
-.avatar-item:hover .avatar-circle {
-  transform: scale(1.05);
+.chat-bubble {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 0.95rem;
+  border-radius: 1rem;
+  font-size: 0.925rem;
+  line-height: 1.55;
+  box-shadow: var(--awh-shadow-sm);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
-.avatar-item.selected .avatar-circle {
-  transform: scale(1.1);
+.chat-message-user .chat-bubble {
+  width: auto;
+  max-width: 100%;
 }
 
-.avatar-item.selected .avatar-circle {
-  box-shadow: 0 0 0 3px var(--accent-color);
+.user-bubble {
+  background: var(--awh-chat-user);
+  color: var(--awh-text-on-accent);
+  border-bottom-right-radius: 0.25rem;
+  white-space: pre-wrap;
 }
 
-.dark-mode .avatar-item.selected .avatar-circle {
-  box-shadow: 0 0 0 3px var(--user-message-dark);
+.gpt-bubble {
+  background: var(--awh-chat-assistant);
+  color: var(--awh-chat-assistant-text);
+  border: 1px solid var(--awh-border);
+  border-bottom-left-radius: 0.25rem;
 }
 
-/* 6.4 Avatar Labels */
-.avatar-label {
-  margin-top: 0.5rem;
-  font-size: 0.8rem;
-  transition: color 0.3s ease;
-  color: var(--light-text-primary);
+.gpt-bubble > :first-child {
+  margin-top: 0;
 }
 
-.dark-mode .avatar-label {
-  color: var(--dark-text-primary);
+.gpt-bubble > :last-child {
+  margin-bottom: 0;
 }
 
-/* ==========================================================================
-   7. RESPONSIVE DESIGN
-   Media queries for different screen sizes
-   ========================================================================== */
-@media (max-width: 768px) {
-  .avatar-grid {
-    grid-template-columns: repeat(3, 1fr);
+.gpt-bubble p {
+  margin: 0 0 0.5rem;
+}
+
+.gpt-bubble ul,
+.gpt-bubble ol {
+  margin: 0.25rem 0 0.5rem 1.1rem;
+  padding: 0;
+}
+
+/* Typing indicator shown while the interviewer prepares a reply */
+.gpt-bubble-typing {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  max-width: max-content;
+  padding: 0.8rem 1.05rem;
+}
+
+.typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+}
+
+.typing-indicator span {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--awh-text-subtle);
+  opacity: 0.45;
+  animation: typing-bounce 1.25s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.32s;
+}
+
+@keyframes typing-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-indicator span {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+.input-area {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--awh-border);
+  background: var(--awh-surface-raised);
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 2;
+}
+
+.input-area-pending {
+  opacity: 0.85;
+}
+
+.input-area-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--awh-text-muted);
+}
+
+.input-area-hint .fa,
+.input-area-hint .fas {
+  margin-top: 0.1rem;
+  color: var(--awh-accent);
+}
+
+@media (max-width: 991px) {
+  .interview-chat-wrap {
+    height: auto;
+    min-height: 360px;
+    max-height: none;
+    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
   }
 
   .chat-container {
-    height: 400px;
+    min-height: 220px;
+    max-height: 42dvh;
   }
 
-  .chat-bubble {
-    font-size: 14px;
-    padding: 12px;
-    margin: 1vw;
+  .interview-chat-wrap .input-area {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(4.35rem + env(safe-area-inset-bottom, 0px));
+    z-index: 1035;
+    margin: 0;
+    padding: 0.65rem var(--awh-page-pad-x, 1rem);
+    box-shadow: 0 -6px 24px rgba(15, 23, 42, 0.1);
   }
 
+  body.dark-mode .interview-chat-wrap .input-area {
+    box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+
+@media (min-width: 992px) {
+  .interview-chat-wrap .input-area {
+    position: sticky;
+    bottom: 0;
+  }
+}
+
+@media (min-width: 480px) {
   .input-area {
-    padding: 10px;
+    flex-direction: row;
+    align-items: flex-end;
   }
 }
 
-/* ==========================================================================
-   Tab Navigation
-   ========================================================================== */
-.nav-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-bottom: 2px solid var(--light-border);
-  margin-bottom: 1rem;
-}
-
-.nav-tabs > li {
-  margin: 0;
-  flex: 0 1 auto;
-}
-
-.nav-tabs > li > a {
-  display: block;
-  padding: 0.75rem 1.25rem;
-  margin: 0;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  color: var(--light-text-secondary);
-  background-color: var(--light-bg-secondary);
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  text-decoration: none;
-}
-
-.nav-tabs > li.active > a {
-  color: white;
-  background-color: var(--accent-color);
-  border-color: var(--accent-color);
-}
-
-.nav-tabs > li > a:hover:not(.active) {
-  background-color: var(--light-border);
-  border-color: var(--light-border);
-}
-
-/* Dark theme adjustments */
-.dark-mode .nav-tabs > li > a {
-  color: var(--dark-text-secondary);
-  background-color: var(--dark-bg-secondary);
-}
-
-/* Tab content spacing */
-.tab-content {
-  padding: 1rem 0;
-}
-
-
-.form-group.shiny-input-container{
+.input-area .shiny-input-container {
+  flex: 1 1 auto;
   width: 100%;
+  margin: 0;
 }
 
-#section_interview_simulator_1-input_area {
+.input-area .form-group {
+  margin-bottom: 0;
+}
+
+.input-area textarea {
+  width: 100% !important;
+  min-height: 3rem;
+  max-height: 8rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--awh-radius-sm);
+  border: 1px solid var(--awh-border-strong);
+  background: var(--awh-surface-input);
+  color: var(--awh-text);
+  font-size: 1rem;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.input-area .send-button {
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 3rem;
+  margin: 0;
+}
+
+@media (min-width: 480px) {
+  .input-area .send-button {
+    width: auto;
+    min-width: 7rem;
+  }
+}
+
+@media (max-width: 575px) {
+  .chat-message-user {
+    max-width: 96%;
+  }
+}
+
+/* Live coaching in chat (collapsed-rail presentation; widths handled above) */
+.interview-layout--live > .interview-setup-col--collapsed .setup-panel-body {
+  display: none;
+}
+
+.interview-layout--live > .interview-setup-col--collapsed .setup-panel-toolbar {
+  justify-content: center;
+}
+
+.interview-layout--live > .interview-setup-col--collapsed .btn-setup-toggle {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  padding: 0.45rem;
+  font-size: 0;
+}
+
+.interview-layout--live > .interview-setup-col--collapsed .btn-setup-toggle .fa,
+.interview-layout--live > .interview-setup-col--collapsed .btn-setup-toggle .fas {
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.setup-panel-toolbar {
+  display: none;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.interview-layout--live .setup-panel-toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 15px;
-  border-top: 1px solid var(--light-border);
-  transition: all 0.3s ease;
 }
 
+.btn-setup-toggle {
+  background: var(--awh-surface-inset);
+  border: 1px solid var(--awh-border);
+  color: var(--awh-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--awh-radius-sm);
+  padding: 0.35rem 0.65rem;
+  min-height: 2rem;
+}
 
+.setup-collapsed-summary {
+  display: none;
+  padding: 0.35rem 0;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  align-items: center;
+}
 
+.interview-setup-col--collapsed .setup-collapsed-summary {
+  display: flex;
+}
 
+.setup-collapsed-name {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--awh-text);
+}
 
+.setup-collapsed-role {
+  margin: 0.35rem 0 0;
+  font-size: 0.65rem;
+  color: var(--awh-text-muted);
+}
 
+.chat-feedback-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--awh-radius-pill);
+  background: var(--awh-accent-soft);
+  border: 1px solid var(--awh-accent-border);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--awh-text-muted);
+  white-space: nowrap;
+}
 
+.chat-feedback-badge-ready {
+  background: rgba(46, 160, 67, 0.12);
+  border-color: rgba(46, 160, 67, 0.35);
+  color: #2ea043;
+}
 
-.chat-container {
-          display: flex;
-          flex-direction: column;
-          height: 400px;
-          overflow-y: auto;
-          padding: 15px;
-          border: 1px solid #ccc;
-          border-radius: 12px;
-          background-color: #f9f9f9;
-          box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-        }
-        .chat-bubble {
-          max-width: 100%;
-          padding: 15px;
-          margin: 1.5vw;
-          border-radius: 20px;
-          font-size: 18px;
-          line-height: 1.6;
-          position: relative;
-          box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
-        }
-        .user-bubble {
-          background-color: #34c759;
-          color: white;
-          align-self: flex-end;
-          border-bottom-right-radius: 0;
-        }
-        .gpt-bubble {
-          background-color: #f0f0f0;
-          color: black;
-          align-self: flex-start;
-          border-bottom-left-radius: 0;
-        }
-        .input-area {
-          margin-top: 15px;
-          display: flex;
-          gap: 10px;
+.chat-feedback-badge-loading {
+  background: var(--awh-surface-inset);
+}
+
+.chat-message-analysis {
+  align-self: center;
+  width: 100%;
+  max-width: 100%;
+  margin: 0.35rem 0 0.65rem;
+}
+
+.analysis-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.45rem;
+  color: var(--awh-text-subtle);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.analysis-divider::before,
+.analysis-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--awh-border);
+}
+
+.chat-message-analysis .chat-message-meta {
+  justify-content: center;
+  color: #b8860b;
+}
+
+.analysis-bubble {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.12), rgba(255, 152, 0, 0.08));
+  border: 1px dashed rgba(255, 152, 0, 0.45);
+  border-radius: 1rem;
+  color: var(--awh-text);
+  box-shadow: none;
+}
+
+.analysis-bubble-loading {
+  text-align: center;
+  color: var(--awh-text-muted);
+}
+
+.analysis-bubble-error {
+  border-color: rgba(220, 53, 69, 0.45);
+  background: rgba(220, 53, 69, 0.08);
+}
+
+.analysis-loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  margin-bottom: 0.35rem;
+}
+
+.analysis-loading-dots span {
+  animation: analysis-dot-pulse 1.2s infinite ease-in-out;
+  font-size: 1.25rem;
+  line-height: 1;
+  opacity: 0.35;
+}
+
+.analysis-loading-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.analysis-loading-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes analysis-dot-pulse {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+.analysis-bubble strong {
+  color: #c77700;
+}
+
+.analysis-bubble ul {
+  margin: 0.35rem 0 0.5rem 1rem;
+  padding: 0;
+}
+
+.analysis-bubble p {
+  margin: 0 0 0.45rem;
+}
+
+.analysis-error-text {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+body.dark-mode .chat-message-analysis .chat-message-meta {
+  color: #ffc107;
+}
+
+body.dark-mode .analysis-bubble {
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.06));
+}
+
+@media (max-width: 991px) {
+  .interview-layout--live > .interview-setup-col--collapsed {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .interview-layout--live > .interview-setup-col--collapsed .setup-panel-body {
+    display: none;
+  }
+
+  .interview-setup-col--collapsed .setup-collapsed-summary {
+    display: none;
+  }
+}

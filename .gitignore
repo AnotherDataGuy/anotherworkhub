@@ -8,5 +8,12 @@ inst/doc
 .DS_Store
 .quarto
 .Renviron
+.Renviron.local
+.env
+.env.*
 anotherworkhubusers.sqlite
+anotherworkhubusers.sqlite*
+*.sqlite.bak*
+*.bak
+inst/app/reports/
 rsconnect/

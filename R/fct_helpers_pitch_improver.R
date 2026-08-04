@@ -29,6 +29,7 @@
 #' @importFrom xml2 read_xml
 #' @importFrom commonmark markdown_html
 #' @importFrom shiny HTML
+#' @importFrom htmltools htmlEscape
 #'
 #' @examples
 #' renderMarkdown('# Hello, World!')
@@ -49,7 +50,7 @@ renderMarkdown <- function(text) {
     # Ensure formatJSON is defined or remove this line
     # formattedText <- formatJSON(data)
     formattedText <- jsonlite::toJSON(data, pretty = TRUE, auto_unbox = TRUE)
-    return(HTML(commonmark::markdown_html(formattedText)))
+    return(HTML(sanitize_untrusted_html(commonmark::markdown_html(formattedText))))
   }
 
   if (grepl("^<\\?xml", text)) {
@@ -57,24 +58,28 @@ renderMarkdown <- function(text) {
     # Ensure formatXML is defined or provide alternative handling
     # formattedText <- formatXML(xmlData)
     formattedText <- as.character(xmlData)
-    return(HTML(commonmark::markdown_html(formattedText)))
+    return(HTML(sanitize_untrusted_html(commonmark::markdown_html(formattedText))))
   }
 
   if (grepl("^<.*>$", text)) {
-    return(HTML(text))
+    # Never trust raw HTML from model/user content (XSS / injection surface).
+    return(HTML(sanitize_untrusted_html(commonmark::markdown_html(text))))
   }
 
   if (grepl("\\$.*\\$", text)) {
     latex_html <- gsub("\\$", "", text) # Remove dollar signs for MathJax
-    return(HTML(sprintf('<span class="math">%s</span>', latex_html)))
+    return(HTML(sprintf(
+      '<span class="math">%s</span>',
+      htmltools::htmlEscape(latex_html)
+    )))
   }
 
   if (grepl("[^\\s\\w]", text)) {
-    return(HTML(commonmark::markdown_html(text)))
+    return(HTML(sanitize_untrusted_html(commonmark::markdown_html(text))))
   }
 
   # Default case: wrap plain text in a paragraph tag
-  return(HTML(sprintf("<p>%s</p>", text)))
+  return(HTML(sprintf("<p>%s</p>", htmltools::htmlEscape(text))))
 }
 
 
@@ -82,10 +87,9 @@ renderMarkdown <- function(text) {
 
 #' Calculate Summary Statistics
 #'
-#' @description This function calculates various summary statistics for a given text, including word count, character count, sentence count, paragraph count, and estimated pitch length in seconds.
+#' @description This function calculates various summary statistics for a given text, including word count, character count, sentence count, and paragraph count.
 #'
 #' @param text A character string containing the text to be analyzed.
-#' @param reading_speed A numeric value representing the reading speed in words per minute.
 #' @param language A character string specifying the language of the text, either "ENG" for English or "FR" for French.
 #'
 #' @return A data frame containing the calculated summary statistics.
@@ -93,8 +97,7 @@ renderMarkdown <- function(text) {
 #' @details The function performs the following steps:
 #'   1. Cleans the text by removing punctuation, digits, and extra whitespace.
 #'   2. Counts the number of characters, words, sentences, and paragraphs in the text.
-#'   3. Calculates the estimated pitch length in seconds based on the reading speed.
-#'   4. Returns a data frame with the summary statistics, labeled according to the specified language.
+#'   3. Returns a data frame with the summary statistics, labeled according to the specified language.
 #'
 #' @importFrom stringr str_remove_all str_squish
 #' @importFrom tokenizers tokenize_words tokenize_sentences
@@ -102,20 +105,18 @@ renderMarkdown <- function(text) {
 #'
 #' @examples
 #' text <- "This is a sample text. It contains multiple sentences and paragraphs."
-#' reading_speed <- 150
 #' language <- "ENG"
-#' summary <- calculate_summary(text, reading_speed, language)
+#' summary <- calculate_summary(text, language)
 #' print(summary)
 #'
 #' @noRd
-calculate_summary <- function(text, reading_speed, language) {
+calculate_summary <- function(text, language) {
   if (is.null(text) || text == "") {
     return(data.frame(
-      "Total Words" = 0,
       "Total Characters" = 0,
+      "Total Words" = 0,
       "Total Sentences" = 0,
-      "Total Paragraphs" = 0,
-      "Pitch Length (seconds)" = 0
+      "Total Paragraphs" = 0
     ))
   }
 
@@ -128,40 +129,27 @@ calculate_summary <- function(text, reading_speed, language) {
     return(text)
   }
 
-  # Original text
   original_text <- text
-
-  # Cleaned text for word counting
   cleaned_text <- clean_for_words(text)
 
-  # char count
-  characters <- length(tokenizers::tokenize_words(cleaned_text)[[1]])
-
-  # word count (including punctuation)
-  words <- nchar(original_text)
-  # Sentence count
+  characters <- nchar(original_text)
+  words <- length(tokenizers::tokenize_words(cleaned_text)[[1]])
   sentences <- length(tokenizers::tokenize_sentences(original_text)[[1]])
-
-  # Paragraph count
   paragraphs <- length(stringi::stri_split_regex(original_text, "\\R{2,}")[[1]])
-
-  pitch_length_seconds <- words / reading_speed * 60
 
   if (language == "ENG") {
     summary_data <- data.frame(
-      "Total Words" = words,
       "Total Characters" = characters,
+      "Total Words" = words,
       "Total Sentences" = sentences,
-      "Total Paragraphs" = paragraphs,
-      "Pitch Length (seconds)" = pitch_length_seconds
+      "Total Paragraphs" = paragraphs
     )
   } else {
     summary_data <- data.frame(
+      "Nombre total de caract\u00e8res" = characters,
       "Nombre total de mots" = words,
-      "Nombre total de caractères" = characters,
       "Nombre total de phrases" = sentences,
-      "Nombre total de paragraphes" = paragraphs,
-      "Durée du pitch (secondes)" = pitch_length_seconds
+      "Nombre total de paragraphes" = paragraphs
     )
   }
 
@@ -190,7 +178,7 @@ calculate_summary <- function(text, reading_speed, language) {
 #' @examples
 #' input_value <- "option1"
 #' english_text <- "The selected option is"
-#' french_text <- "L'option sélectionnée est"
+#' french_text <- "L'option s\u00e9lectionn\u00e9e est"
 #' lang <- "ENG"
 #' is_text_input <- FALSE
 #' sentence <- construct_sentence(input_value, english_text, french_text, lang, is_text_input)
@@ -207,7 +195,11 @@ construct_sentence <- function(input_value, english_text, french_text, lang, is_
   } else {
     # Now using the passed translations
     choices_map <- if (lang == "ENG") translations$english_choices_map else translations$french_choices_map
-    label <- if (input_value %in% names(choices_map)) choices_map[[input_value]] else "Unknown choice"
+    label <- if (input_value %in% names(choices_map)) {
+      choices_map[[input_value]]
+    } else {
+      t_lang(translations$pitch$unknown_choice, lang)
+    }
   }
 
   sentence <- if (lang == "ENG") {
@@ -242,7 +234,7 @@ construct_sentence <- function(input_value, english_text, french_text, lang, is_
 #' @examples
 #' input_value <- "level1"
 #' english_text <- "The selected level is"
-#' french_text <- "Le niveau sélectionné est"
+#' french_text <- "Le niveau s\u00e9lectionn\u00e9 est"
 #' lang <- "ENG"
 #' is_text_input <- FALSE
 #' labels <- list(level1 = "Beginner", level2 = "Intermediate", level3 = "Advanced")
@@ -250,14 +242,18 @@ construct_sentence <- function(input_value, english_text, french_text, lang, is_
 #' print(sentence)
 #'
 #' @noRd
-construct_sentence_niveau <- function(input_value, english_text, french_text, lang, is_text_input = FALSE, labels = NULL) {
+construct_sentence_niveau <- function(input_value, english_text, french_text, lang, is_text_input = FALSE, labels = NULL, unknown_label = "Unknown choice") {
   if (!is.null(input_value) && input_value != "" && !is.na(input_value)) {
     if (is_text_input) {
       # Directly use the input value for textInput
       label <- input_value
     } else {
       # Use the provided labels for selectInput label lookup
-      label <- if (input_value %in% names(labels)) labels[[input_value]] else "Unknown choice"
+      label <- if (input_value %in% names(labels)) {
+        labels[[input_value]]
+      } else {
+        unknown_label
+      }
     }
 
     sentence <- if (lang == "ENG") {
@@ -295,14 +291,14 @@ construct_sentence_niveau <- function(input_value, english_text, french_text, la
 #' @examples
 #' input_value <- "option1"
 #' english_text <- "The selected option is"
-#' french_text <- "L'option sélectionnée est"
+#' french_text <- "L'option s\u00e9lectionn\u00e9e est"
 #' lang <- "ENG"
 #' labels <- list(option1 = "First Option", option2 = "Second Option")
 #' sentence <- construct_general_sentence(input_value, english_text, french_text, lang, labels)
 #' print(sentence)
 #'
 #' @noRd
-construct_general_sentence <- function(input_value, english_text, french_text, lang, labels = NULL) {
+construct_general_sentence <- function(input_value, english_text, french_text, lang, labels = NULL, unknown_label = "Unknown choice") {
   # Check if input value is NA, NULL, or empty
   if (is.null(input_value) || is.na(input_value) || input_value == "") {
     return("")
@@ -350,7 +346,7 @@ construct_general_sentence <- function(input_value, english_text, french_text, l
 #' @examples
 #' input_value <- "context1"
 #' english_text <- "The selected context is"
-#' french_text <- "Le contexte sélectionné est"
+#' french_text <- "Le contexte s\u00e9lectionn\u00e9 est"
 #' lang <- "ENG"
 #' sentence <- construct_context_sentence(input_value, english_text, french_text, lang)
 #' print(sentence)
